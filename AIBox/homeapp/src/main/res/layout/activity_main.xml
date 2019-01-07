@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <!--<LinearLayout-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:orientation="horizontal">-->
+
+    <!--<TextView-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginLeft="10dp"-->
+    <!--android:layout_marginTop="20dp"-->
+    <!--android:text="连接状态:"-->
+    <!--android:textSize="20dp" />-->
+
+    <!--<TextView-->
+    <!--android:id="@+id/serverstatus"-->
+    <!--android:layout_width="0dp"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginLeft="20dp"-->
+    <!--android:layout_marginTop="20dp"-->
+    <!--android:layout_weight="1"-->
+    <!--android:text="未连接"-->
+    <!--android:textSize="16dp" />-->
+
+    <!--</LinearLayout>-->
+
+    <!--<View-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="1dp"-->
+    <!--android:background="#cccccc" />-->
+
+    <!--<LinearLayout-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:orientation="horizontal">-->
+
+    <!--<TextView-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginLeft="10dp"-->
+    <!--android:layout_marginTop="20dp"-->
+    <!--android:text="锁状态:"-->
+    <!--android:textSize="20dp" />-->
+
+    <!--<TextView-->
+    <!--android:id="@+id/lockstatus"-->
+    <!--android:layout_width="0dp"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginLeft="20dp"-->
+    <!--android:layout_marginTop="20dp"-->
+    <!--android:layout_weight="1"-->
+    <!--android:text="未知"-->
+    <!--android:textSize="16dp" />-->
+
+    <!--</LinearLayout>-->
+
+    <!--<View-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="1dp"-->
+    <!--android:background="#cccccc" />-->
+
+    <!--<Button-->
+    <!--android:id="@+id/openlock"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginTop="20dp"-->
+    <!--android:text="开锁"-->
+    <!--android:textSize="14sp" />-->
+
+    <!--<Button-->
+    <!--android:id="@+id/closelock"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginTop="5dp"-->
+    <!--android:text="关锁"-->
+    <!--android:textSize="14sp" />-->
+
+    <!--<LinearLayout-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:orientation="horizontal">-->
+
+    <!--<TextView-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginLeft="10dp"-->
+    <!--android:layout_marginTop="20dp"-->
+    <!--android:text="服务器消息:"-->
+    <!--android:textSize="20dp" />-->
+
+    <!--<TextView-->
+    <!--android:id="@+id/tv"-->
+    <!--android:layout_width="0dp"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginLeft="20dp"-->
+    <!--android:layout_marginTop="20dp"-->
+    <!--android:layout_weight="1"-->
+    <!--android:text="null"-->
+    <!--android:textSize="16dp" />-->
+
+    <!--</LinearLayout>-->
+
+    <!--<View-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="1dp"-->
+    <!--android:background="#cccccc" />-->
+
+    <!--<EditText-->
+    <!--android:id="@+id/et_send"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="40dp"-->
+    <!--android:layout_marginTop="20dp"-->
+    <!--android:hint="请输入要发送给服务器的内容"-->
+    <!--android:textSize="16dp" />-->
+
+    <Button
+        android:id="@+id/bt_send"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp"
+        android:text="发送给服务器"
+        android:textSize="14sp" />
+
+</RelativeLayout>
+
