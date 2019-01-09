@@ -20,8 +20,11 @@ import org.json.JSONObject;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import static com.box.utils.ILog.TIME_TAG;
 
 /**
  * Created by Curry on 2018/7/17.
@@ -85,24 +88,24 @@ public class ServerModule {
             if (isConnecting()) {
                 return;
             }
-            ILog.d("start connect to server!");
+            ILog.d(TIME_TAG, new Date().getTime() + "，start connect to server!");
             socketClient = new WebSocketClient(new URI(getServerAddress()), new Draft_6455() {
             }, null, connectTimeout) {
                 @Override
                 public void onWebsocketHandshakeSentAsClient(WebSocket conn, ClientHandshake request) throws InvalidDataException {
                     super.onWebsocketHandshakeSentAsClient(conn, request);
-                    ILog.d("发送握手了");
+                    ILog.d(TIME_TAG, new Date().getTime() + "，发送握手了!");
                 }
 
                 @Override
                 public void onWebsocketHandshakeReceivedAsClient(WebSocket conn, ClientHandshake request, ServerHandshake response) throws InvalidDataException {
                     super.onWebsocketHandshakeReceivedAsClient(conn, request, response);
-                    ILog.d("接受到握手了");
+                    ILog.d(TIME_TAG, new Date().getTime() + "，接受到握手了!");
                 }
 
                 @Override
                 public void onOpen(ServerHandshake handshakedata) {
-                    ILog.d("连接打开onOpen()");
+                    ILog.d(TIME_TAG, new Date().getTime() + "，连接打开onOpen!");
                     if (listener != null)
                         listener.onOpen();
 
@@ -119,7 +122,7 @@ public class ServerModule {
 
                 @Override
                 public void onMessage(String message) {
-                    ILog.d("received msg:" + message);
+                    ILog.d(TIME_TAG, new Date().getTime() + "，接收到后台数据:" + message);
                     if (listener != null)
                         listener.onMessage(message);
                     if (!TextUtils.isEmpty(message)) {

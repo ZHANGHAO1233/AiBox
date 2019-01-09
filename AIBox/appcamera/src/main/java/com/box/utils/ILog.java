@@ -4,19 +4,37 @@ package com.box.utils;
  * Created by leetn on 2016/11/14.
  */
 
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
-import com.box.utils.LogUtil;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.consts.HandleConsts.HANDLER_MESSAGE_WHAT_MESS;
 
 /**
  * Created by leetn on 2016/10/27.
  */
 public class ILog {
+    public static final String TIME_TAG = "TIME_TAG";
     public static final String BUSINESS_LOG = "box_business_log";
+    public static final Map<String, Handler> handlerMap;
+
+    static {
+        handlerMap = new HashMap<>();
+    }
 
     public static void d(String tag, String msg) {
         Log.d(tag, msg);
-        LogUtil.writeMsg(tag,msg);
+        LogUtil.writeMsg(tag, msg);
+        Handler handler = handlerMap.get(tag);
+        if (handler != null) {
+            Message message = new Message();
+            message.obj = msg;
+            message.what = HANDLER_MESSAGE_WHAT_MESS;
+            handler.sendMessage(message);
+        }
     }
 
     public static void e(String tag, String msg, Throwable tr) {
@@ -55,4 +73,7 @@ public class ILog {
         w(BUSINESS_LOG, msg);
     }
 
+    public static void setTagHandler(String tag, Handler handler) {
+        handlerMap.put(tag, handler);
+    }
 }

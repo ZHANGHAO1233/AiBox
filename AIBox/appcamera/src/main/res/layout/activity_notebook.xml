@@ -7,12 +7,6 @@
     android:orientation="vertical"
     tools:context="com.notebook.NotebookActivity">
 
-    <Button
-        android:id="@+id/download"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="download"/>
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -34,11 +28,40 @@
             android:text="测试关门" />
     </LinearLayout>
 
-    <ImageView
-        android:id="@+id/iv"
-        android:layout_weight="1"
+    <TextView
+        android:id="@+id/tv_order_no"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="20px"
+        android:padding="10px"
+        android:text="订单号"
+        android:textSize="30px"
+        android:textStyle="bold" />
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:src="@drawable/commodity" />
+        android:layout_weight="1"
+        android:orientation="horizontal">
 
+        <ListView
+            android:id="@+id/lv_open_params"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <ListView
+            android:id="@+id/lv_close_params"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <ListView
+            android:id="@+id/lv_time_log"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:transcriptMode="alwaysScroll" />
+    </LinearLayout>
 </LinearLayout>

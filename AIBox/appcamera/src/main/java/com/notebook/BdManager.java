@@ -10,10 +10,11 @@ import android.os.Message;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 
-import com.baidu.retail.Classifier;
 import com.baidu.retail.ImageSaver;
 import com.baidu.retail.RetailInputParam;
 import com.baidu.retail.RetailVisManager;
+import com.bean.CloseParam;
+import com.bean.OpenParam;
 import com.box.core.OsModule;
 import com.box.utils.ILog;
 import com.box.utils.TimeUtil;
@@ -27,9 +28,13 @@ import com.utils.DownloadUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.box.utils.ILog.TIME_TAG;
+import static com.consts.HandleConsts.HANDLER_MESSAGE_WHAT_PARMA;
 
 /**
  * Created by Curry on 2018/9/29.
@@ -40,18 +45,24 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     private static BdManager bd;
     private final String ipAndPort = "192.168.1.186:8080";
     private final String http = "http://";
-    private String urls[] = new String[]{http + ipAndPort + "/cap_0.jpg", http + ipAndPort + "/cap_1.jpg", http + ipAndPort + "/cap_2.jpg", http + ipAndPort + "/cap_3.jpg"};
-    //    private String urls[] = new String[]{"https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png"};
+        private String urls[] = new String[]{http + ipAndPort + "/cap_0.jpg", http + ipAndPort + "/cap_1.jpg", http + ipAndPort + "/cap_2.jpg", http + ipAndPort + "/cap_3.jpg"};
+//    private String urls[] = new String[]{"https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png"};
     //    public String urls[] = new String[]{"http://192.168.1.185:8080/cap_0.jpg", "http://192.168.1.185:8080/cap_1.jpg", "http://192.168.1.185:8080/cap_2.jpg", "http://192.168.1.185:8080/cap_3.jpg"};
     private String downloadParentDir = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "AiImages";
     private String currentImageDir = "";
     //    private String downloadParentDir = MyApplication.getContext().getCacheDir().getAbsolutePath();
     private List<String> paths = new ArrayList<>();
     private volatile int finishNum = urls.length;
-    private boolean hasFinish = true;
+    private boolean hasDownLoadFinish = true;
     private Handler handler;
     private volatile String currentOrder = "";//规则，设备sn+时间戳
-    public static volatile int transactionStatus = 2;//0:opendoor,1:closedoor,2:result;
+    public static int TRANSACTION_STATUS_INITED = 0;//订单初始化
+    public static int TRANSACTION_STATUS_OPENDOOR = 1;//订单开门
+    public static int TRANSACTION_STATUS_CLOSEDOOR = 2;//订单关门
+    public static int TRANSACTION_STATUS_RESULT = 3;//无订单状态
+    public static volatile int transactionStatus = TRANSACTION_STATUS_RESULT;
+    public Map<String, Double> serialResults;
+
     private final String linkChar = "-";
     private Map<String, SerialPortManager> serials;
     private Map<String, List<String>> commandMap;
@@ -177,12 +188,18 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
 
     @Override
     public void onDoorClose() {
+        ILog.d(TIME_TAG, new Date().getTime() + ",开始收集关门数据");
         downloadImages(false);
+        this.serialResults = null;
+        this.serialResults = getSerialResults();
     }
 
     @Override
     public void onDoorOpen() {
+        ILog.d(TIME_TAG, new Date().getTime() + ",开始收集开门数据");
         downloadImages(true);
+        this.serialResults = null;
+        this.serialResults = getSerialResults();
     }
 
     public void initBdConfig() {
@@ -223,10 +240,11 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     }
 
     public synchronized void downloadImages(boolean isOpenDoor) {
-        if (hasFinish) {
+        ILog.d(TIME_TAG, new Date().getTime() + ",开始下载图片");
+        if (hasDownLoadFinish) {
             paths.clear();
             finishNum = 0;
-            hasFinish = false;
+            hasDownLoadFinish = false;
             String currentTime = TimeUtil.getTimeStr();
             String currentDirTime = TimeUtil.getTimeStr2();
             if (isOpenDoor) {
@@ -242,17 +260,11 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
 
     @Override
     public void onDownloadSuccess(File file, boolean isOpenDoor) {
-        ILog.d("download succuss,file:" + file);
+        ILog.d(TIME_TAG, new Date().getTime() + ",图片下载成功,file:" + file);
         if (file != null) {
             paths.add(file.getAbsolutePath());
-            if (handler != null) {
-                Message m = new Message();
-                m.what = 0;
-                m.obj = file;
-                handler.sendMessage(m);
-            }
         }
-        checkFinish(isOpenDoor);
+        checkDownloadFinish(isOpenDoor);
     }
 
     @Override
@@ -263,16 +275,17 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     @Override
     public void onDownloadFailed(Exception e, boolean isOpenDoor) {
         ILog.d("download fail:e:" + e.getMessage());
-        checkFinish(isOpenDoor);
+        checkDownloadFinish(isOpenDoor);
     }
 
-    private synchronized void checkFinish(boolean isOpenDoor) {
+    private synchronized void checkDownloadFinish(boolean isOpenDoor) {
         finishNum++;
         if (finishNum >= urls.length) {
-            hasFinish = true;
+            ILog.d(TIME_TAG, new Date().getTime() + ",图片下载完成");
+            hasDownLoadFinish = true;
             startRecognize(isOpenDoor);
         }
-        ILog.d("finish num:" + finishNum + ":has finish:" + hasFinish);
+        ILog.d("finish num:" + finishNum + ":has finish:" + hasDownLoadFinish);
     }
 
     public void testOpen() {
@@ -280,7 +293,12 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
             @Override
             public void run() {
                 Looper.prepare();
-                downloadImages(true);
+                if (BdManager.transactionStatus == TRANSACTION_STATUS_RESULT) {
+                    BdManager.transactionStatus = TRANSACTION_STATUS_INITED;
+                    downloadImages(true);
+                    serialResults = null;
+                    serialResults = getSerialResults();
+                }
             }
         }).start();
     }
@@ -291,36 +309,42 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
             public void run() {
                 Looper.prepare();
                 downloadImages(false);
+                serialResults = null;
+                serialResults = getSerialResults();
             }
         }).start();
     }
 
     private void startRecognize(final boolean isOpenDoor) {
         new Thread(new Runnable() {
+
             @Override
             public void run() {
                 synchronized (serials) {
-                    ILog.d(TAG, "逻辑加锁开始");
+                    while (serialResults == null) {
+                    }
                     Looper.prepare();
-                    ILog.d("open:" + isOpenDoor + ":ready to recognize:");
+                    ILog.d(TIME_TAG, new Date().getTime() + ",开始整理" + (isOpenDoor ? "开门" : "关门") + "参数");
                     List<BdParam> bdParams = new ArrayList<>();
-                    Map<String, Double> serialResults = getSerialResults();
                     for (int i = 0; i < paths.size(); i++) {
                         //在这里把图片和摄像头编号对应
                         int cameraNum = -1;
                         Bitmap bitmap = null;
                         String path = paths.get(i);
                         if (!TextUtils.isEmpty(path)) {
+                            cameraNum = getCameraNum(path);
                             bitmap = path2Bitmap(path);
-                            if (bitmap != null) {
-                                cameraNum = getCameraNum(path);
-                            }
                         }
                         if (cameraNum != -1) {
                             List<Double> weights = getWeight(serialResults, cameraNum);
                             BdParam param = new BdParam(bitmap, cameraNum, weights);
                             StringBuilder builder = new StringBuilder();
-                            builder.append("cameraNum:" + cameraNum + ";\nbitmap:" + bitmap + ";\npath:" + path + ";\nweights:");
+                            builder.append("cameraNum:" + cameraNum + ";\n");
+                            if (bitmap != null) {
+                                builder.append("bitmap: width:" + bitmap.getWidth() + "height:" + bitmap.getHeight() + ";\n");
+                            }
+                            builder.append("path:" + path + ";\n");
+                            builder.append("weights:");
                             builder.append("[");
                             for (double weight : weights) {
                                 builder.append(weight + ",");
@@ -330,10 +354,6 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
                             bdParams.add(param);
                         }
                     }
-                    //参数获取完整后，才开门
-                    if (isOpenDoor) {
-                        OsModule.get().unlock();
-                    }
                     ILog.d("BdParam size:" + bdParams.size() + ":ready to recognize:");
                     if (bdParams.size() > 0) {
                         //进行一个排序
@@ -341,47 +361,74 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
                         final List<RetailInputParam> params = new ArrayList<>();
                         for (int i = 0; i < bdParams.size(); i++) {
                             BdParam bdParam = bdParams.get(i);
-                            RetailInputParam retailInputParam = new RetailInputParam(bdParam.getBitmap(), bdParam.getFloor() + "", bdParam.getWeights());
-                            ILog.d("generate bd params,current floor:" + bdParam.getFloor());
+                            RetailInputParam retailInputParam = new RetailInputParam(bdParam.getBitmap(),
+                                    bdParam.getFloor() + "", bdParam.getWeights());
                             params.add(retailInputParam);
                         }
                         if (isOpenDoor) {
-                            if (transactionStatus >= 2) {
+                            //当前状态为已初始化状态
+                            if (transactionStatus == TRANSACTION_STATUS_INITED) {
                                 try {
                                     currentOrder = OsModule.get().getSn() + "-" + System.currentTimeMillis();
-                                    ILog.d("start to recognize open picture");
-                                    transactionStatus = RetailVisManager.openDoor(currentOrder, params) ? 0 : transactionStatus;
-                                    List<Classifier.Recognition> recognitions = RetailVisManager.getOpenClassify(0);
-                                    ILog.d("recognitions open:" + recognitions);
+                                    ILog.d(TIME_TAG, new Date().getTime() + ",开始提交开门数据");
+                                    boolean succ = RetailVisManager.openDoor(currentOrder, params);
+                                    transactionStatus = succ ? TRANSACTION_STATUS_OPENDOOR : TRANSACTION_STATUS_RESULT;
+                                    ILog.d(TIME_TAG, new Date().getTime() + "提交开门数据" + (succ ? "成功" : "失败") + "\n，transactionStatus 更新为 " + transactionStatus);
+//                                    List<Classifier.Recognition> recognitions = RetailVisManager.getOpenClassify(0);
+//                                    ILog.d("recognitions open:" + recognitions);
+                                    if (handler != null) {
+                                        Message m = new Message();
+                                        m.obj = new OpenParam(currentOrder, params);
+                                        m.what = HANDLER_MESSAGE_WHAT_PARMA;
+                                        handler.sendMessage(m);
+                                    }
+                                    if (succ) {
+                                        //参数获取完整后，才开门
+                                        OsModule.get().unlock();
+                                    }
                                 } catch (Exception e) {
-                                    e.printStackTrace();
-                                    ILog.d("recognize open picture excetion:" + e.getMessage());
+                                    //参数提交异常，恢复为结束状态，需要用户重新扫码开门
+                                    transactionStatus = TRANSACTION_STATUS_RESULT;
+                                    ILog.d("提交开门数据异常:" + e.getMessage());
                                 }
-                                ILog.d("open picture recognize end!");
+                                ILog.d("提交开门数据结束!");
                             } else {
-                                ILog.d("start recognize open picture stop,transactionStatus:" + transactionStatus);
+                                //当前状态异常，恢复为结束状态
+                                ILog.d("错误的订单状态,transactionStatus:" + transactionStatus);
+                                transactionStatus = TRANSACTION_STATUS_RESULT;
                             }
                         } else {
-                            if (transactionStatus == 0) {
+                            //当前状态为已开门状态
+                            if (transactionStatus == TRANSACTION_STATUS_OPENDOOR) {
                                 try {
-                                    ILog.d("start to recognize close picture");
-                                    transactionStatus = RetailVisManager.closeDoor(currentOrder, params) ? 1 : transactionStatus;
-                                    List<Classifier.Recognition> recognitions = RetailVisManager.getOpenClassify(0);
-                                    ILog.d("recognitions close:" + recognitions);
+                                    ILog.d(TIME_TAG, new Date().getTime() + "，开始提交关门数据");
+                                    boolean succ = RetailVisManager.closeDoor(currentOrder, params);
+                                    transactionStatus = succ ? TRANSACTION_STATUS_CLOSEDOOR : TRANSACTION_STATUS_RESULT;
+                                    ILog.d(TIME_TAG, new Date().getTime() + "，提交关门数据" + (succ ? "成功" : "失败") + "\ntransactionStatus 更新为 " + transactionStatus);
+//                                    List<Classifier.Recognition> recognitions = RetailVisManager.getOpenClassify(0);
+//                                    ILog.d("recognitions close:" + recognitions);
+                                    if (handler != null) {
+                                        Message m = new Message();
+                                        m.obj = new CloseParam(params);
+                                        m.what = HANDLER_MESSAGE_WHAT_PARMA;
+                                        handler.sendMessage(m);
+                                    }
                                 } catch (Exception e) {
-                                    e.printStackTrace();
-                                    ILog.d("recognize close picture excetion:" + e.getMessage());
+                                    //参数提交异常，恢复为结束状态，数据未提交。
+                                    transactionStatus = TRANSACTION_STATUS_RESULT;
+                                    ILog.d("开始提交关门数据异常:" + e.getMessage());
                                 }
-                                ILog.d("close picture recognize end!");
+                                ILog.d("提交关门数据结束!");
                             } else {
-                                ILog.d("start recognize close picture stop,transactionStatus:" + transactionStatus);
+                                ILog.d("错误的订单状态,transactionStatus:" + transactionStatus);
+                                transactionStatus = TRANSACTION_STATUS_RESULT;
                             }
                         }
                     } else {
-                        ILog.d("params is null,stop recognize picture!");
+                        ILog.d("无有效参数，订单结束");
+                        transactionStatus = TRANSACTION_STATUS_RESULT;
                     }
                 }
-                ILog.d(TAG, "逻辑加锁结束");
             }
         }).start();
     }
@@ -405,6 +452,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
      * 获取商品重量
      */
     private List<Double> getWeight(Map<String, Double> serialResultMap, int camera_num) {
+        ILog.d(TIME_TAG, new Date().getTime() + ",开始获取摄像头" + camera_num + "的重量信息");
         List<Double> weights = new ArrayList<>();
         //单个摄像头对应称的数量
         int camera_weights_size = 3;
@@ -417,10 +465,12 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
                 weights.add((double) Integer.MAX_VALUE);
             }
         }
+        ILog.d(TIME_TAG, new Date().getTime() + ",摄像头" + camera_num + "获取重量信息完成");
         return weights;
     }
 
     private Map<String, Double> getSerialResults() {
+        ILog.d(TIME_TAG, new Date().getTime() + ",发送获取重量指令集");
         Map<String, Double> resultMap = new HashMap<>();
         for (String key : this.commandMap.keySet()) {
             List<String> commands = this.commandMap.get(key);
@@ -429,6 +479,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
                 resultMap.putAll(manager.sendCommand(commands));
             }
         }
+        ILog.d(TIME_TAG, new Date().getTime() + ",获取重量集完成" + GsonUtil.toJson(resultMap));
         return resultMap;
     }
 
