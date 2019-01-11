@@ -368,23 +368,19 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
                         if (isOpenDoor) {
                             //当前状态为已初始化状态
                             if (transactionStatus == TRANSACTION_STATUS_INITED) {
+                                //参数获取完整后，才开门
+                                OsModule.get().unlock();
                                 try {
                                     currentOrder = OsModule.get().getSn() + "-" + System.currentTimeMillis();
                                     ILog.d(TIME_TAG, new Date().getTime() + ",开始提交开门数据");
                                     boolean succ = RetailVisManager.openDoor(currentOrder, params);
                                     transactionStatus = succ ? TRANSACTION_STATUS_OPENDOOR : TRANSACTION_STATUS_RESULT;
                                     ILog.d(TIME_TAG, new Date().getTime() + "提交开门数据" + (succ ? "成功" : "失败") + "\n，transactionStatus 更新为 " + transactionStatus);
-//                                    List<Classifier.Recognition> recognitions = RetailVisManager.getOpenClassify(0);
-//                                    ILog.d("recognitions open:" + recognitions);
                                     if (handler != null) {
                                         Message m = new Message();
                                         m.obj = new OpenParam(currentOrder, params);
                                         m.what = HANDLER_MESSAGE_WHAT_PARMA;
                                         handler.sendMessage(m);
-                                    }
-                                    if (succ) {
-                                        //参数获取完整后，才开门
-                                        OsModule.get().unlock();
                                     }
                                 } catch (Exception e) {
                                     //参数提交异常，恢复为结束状态，需要用户重新扫码开门
@@ -405,8 +401,6 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
                                     boolean succ = RetailVisManager.closeDoor(currentOrder, params);
                                     transactionStatus = succ ? TRANSACTION_STATUS_CLOSEDOOR : TRANSACTION_STATUS_RESULT;
                                     ILog.d(TIME_TAG, new Date().getTime() + "，提交关门数据" + (succ ? "成功" : "失败") + "\ntransactionStatus 更新为 " + transactionStatus);
-//                                    List<Classifier.Recognition> recognitions = RetailVisManager.getOpenClassify(0);
-//                                    ILog.d("recognitions close:" + recognitions);
                                     if (handler != null) {
                                         Message m = new Message();
                                         m.obj = new CloseParam(params);
