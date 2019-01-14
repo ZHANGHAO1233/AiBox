@@ -32,6 +32,7 @@ public class OsModule {
     private static OsModule osOperator;
     private ServerModule server;
     private Handler handler;
+    private Integer wxUserId;
 
     private OsModule() {
         server = ServerModule.getServer();
@@ -71,7 +72,7 @@ public class OsModule {
         }
     }
 
-    public void captureImageBeforeunlock() {
+    public void captureImageBeforeunlock(Integer wxUserId) {
         if (this.handler != null) {
             Message message = new Message();
             message.what = HANDLER_MESSAGE_WHAT_INITED;
@@ -83,6 +84,7 @@ public class OsModule {
         ILog.d(TAG, "当前门锁状态:" + (unlock ? "开启" : "关闭"));
         ILog.d(TAG, "当前订单状态:" + BdManager.transactionStatus);
         if (!unlock || BdManager.transactionStatus == TRANSACTION_STATUS_RESULT) {
+            this.wxUserId = wxUserId;
             BdManager.transactionStatus = TRANSACTION_STATUS_INITED;
             //取照片
             ILog.d(TAG, "--captureImageBeforeunlock  door before,get the picture:");
@@ -153,6 +155,9 @@ public class OsModule {
         map.put("sid", UUID.randomUUID().toString());
         map.put("cmd", "RetailStatus");
         map.put("status", open ? "Opened" : "Closed");
+        if (this.wxUserId != null) {
+            map.put("wxUserId", this.wxUserId);
+        }
         String json = new JSONObject(map).toString();
         sendMsg(json);
     }
@@ -162,6 +167,9 @@ public class OsModule {
         map.put("sid", UUID.randomUUID().toString());
         map.put("cmd", "CommodityStatus");
         map.put("data", data);
+        if (this.wxUserId != null) {
+            map.put("wxUserId", this.wxUserId);
+        }
         String json = new JSONObject(map).toString();
         ILog.d(TAG, "send result 2 server,result:" + json);
         sendMsg(json);

@@ -128,12 +128,14 @@ public class ServerModule {
                     if (!TextUtils.isEmpty(message)) {
                         try {
                             String sid, cmd;
+                            Integer wxUserId;
                             JSONObject json = new JSONObject(message);
                             sid = json.getString("sid");
                             cmd = json.getString("cmd");
+                            wxUserId = json.getInt("wxUserId");
                             OsModule os = OsModule.get();
                             if (cmd.equals("RetailOpen")) {
-                                os.captureImageBeforeunlock();
+                                os.captureImageBeforeunlock(wxUserId);
                             } else if (cmd.equals("RetailClose")) {
                                 os.lock();
                             }
