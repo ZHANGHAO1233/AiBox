@@ -57,8 +57,8 @@ public class OsModule {
     }
 
     public String getSn() {
-//        return IDataApi.System.getDeviceSn();
-        return "1688619";
+        return IDataApi.System.getDeviceSn();
+//        return "1688619";
     }
 
     public void lock() {//上锁
