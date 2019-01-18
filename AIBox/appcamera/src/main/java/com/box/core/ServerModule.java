@@ -7,6 +7,7 @@ import com.box.utils.AesUtil;
 import com.box.utils.ILog;
 import com.box.utils.MD5Test;
 import com.box.utils.NetworkUtil;
+import com.consts.TimeConsts;
 import com.example.funsdkdemo.MyApplication;
 
 import org.java_websocket.WebSocket;
@@ -128,13 +129,20 @@ public class ServerModule {
                     if (!TextUtils.isEmpty(message)) {
                         try {
                             String sid, cmd;
+                            Integer wxUserId;
                             JSONObject json = new JSONObject(message);
                             sid = json.getString("sid");
                             cmd = json.getString("cmd");
+                            wxUserId = json.getInt("wxUserId");
                             OsModule os = OsModule.get();
+                            long now = new Date().getTime();
                             if (cmd.equals("RetailOpen")) {
-                                os.captureImageBeforeunlock();
+                                os.captureImageBeforeunlock(wxUserId);
+                                TimeConsts.ORDER_START_TIME = now;
+                                TimeConsts.OPEN_MESS_RECEIVED_TIME = now;
+                                os.captureImageBeforeunlock(wxUserId);
                             } else if (cmd.equals("RetailClose")) {
+                                TimeConsts.CLOSE_MESS_RECEIVED_TIME = now;
                                 os.lock();
                             }
                         } catch (Exception e) {

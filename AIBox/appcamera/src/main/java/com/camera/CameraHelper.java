@@ -45,7 +45,7 @@ public class CameraHelper {//解耦UI
     }
 
     public void initBdConfig() {
-        RetailVisManager.load(activity, new BdCallback());
+        RetailVisManager.load(activity, new BdCallback(null));
         RetailVisManager.setAppid(OsModule.get().getSn());
         RetailVisManager.setSK("K1GhMzLG6YAWY3oDSWCjTWIiKo7SjDSP");
 //        RetailVisManager.setAK("W7SFpfC5o7tS3d4CQugZ8YEglb9QVEzN");

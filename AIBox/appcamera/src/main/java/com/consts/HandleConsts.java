@@ -9,4 +9,5 @@ public class HandleConsts {
     public static final int HANDLER_MESSAGE_WHAT_MESS = 1;
     public static final int HANDLER_MESSAGE_WHAT_PARMA = 2;
     public static final int HANDLER_MESSAGE_WHAT_INITED = 3;
+    public static final int HANDLER_MESSAGE_WHAT_ORDER = 4;
 }

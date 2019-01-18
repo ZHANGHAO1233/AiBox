@@ -7,13 +7,16 @@ import android.os.Message;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.baidu.retail.RetailInputParam;
 import com.bean.CloseParam;
 import com.bean.OpenParam;
+import com.bean.Order;
 import com.box.core.OsModule;
 import com.box.utils.ILog;
 import com.idata.aibox.R;
+import com.mgr.OrderFileManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +24,10 @@ import java.util.List;
 import static com.box.utils.ILog.TIME_TAG;
 import static com.consts.HandleConsts.HANDLER_MESSAGE_WHAT_INITED;
 import static com.consts.HandleConsts.HANDLER_MESSAGE_WHAT_MESS;
+import static com.consts.HandleConsts.HANDLER_MESSAGE_WHAT_ORDER;
 import static com.consts.HandleConsts.HANDLER_MESSAGE_WHAT_PARMA;
 
-public class NotebookActivity extends android.app.Activity {
+public class NotebookActivity extends android.app.Activity implements View.OnClickListener {
     private TextView tv_order_no;
     private ListView lv_open_params;
     private ListView lv_close_params;
@@ -32,6 +36,7 @@ public class NotebookActivity extends android.app.Activity {
     public RequestParamsHandler handler = new RequestParamsHandler();
     private List<String> logs;
     private LogAdapter logAdapter;
+    private Order order;
 
     @Override
     protected void onPause() {
@@ -43,8 +48,8 @@ public class NotebookActivity extends android.app.Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notebook);
         nh = BdManager.getBd();
-        ILog.setTagHandler(TIME_TAG, handler);
         nh.init(handler);
+        ILog.setTagHandler(TIME_TAG, handler);
         OsModule.get().setHandler(handler);
         initView();
     }
@@ -54,23 +59,10 @@ public class NotebookActivity extends android.app.Activity {
         this.lv_open_params = (ListView) findViewById(R.id.lv_open_params);
         this.lv_close_params = (ListView) findViewById(R.id.lv_close_params);
         this.lv_time_log = (ListView) findViewById(R.id.lv_time_log);
-        findViewById(R.id.download1).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (handler != null) {
-                    Message message = new Message();
-                    message.what = HANDLER_MESSAGE_WHAT_INITED;
-                    handler.sendMessage(message);
-                }
-                nh.testOpen();
-            }
-        });
-        findViewById(R.id.download2).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                nh.testClose();
-            }
-        });
+        findViewById(R.id.download1).setOnClickListener(this);
+        findViewById(R.id.download2).setOnClickListener(this);
+        findViewById(R.id.order_succ).setOnClickListener(this);
+        findViewById(R.id.order_fail).setOnClickListener(this);
     }
 
     @Override
@@ -79,9 +71,46 @@ public class NotebookActivity extends android.app.Activity {
         BdManager.getBd().closeAllSerials();
     }
 
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.download1:
+                if (handler != null) {
+                    Message message = new Message();
+                    message.what = HANDLER_MESSAGE_WHAT_INITED;
+                    handler.sendMessage(message);
+                }
+                nh.testOpen();
+                break;
+            case R.id.download2:
+                nh.testClose();
+                break;
+            case R.id.order_succ:
+                if (order != null) {
+                    try {
+                        OrderFileManager.getInstance().writeOrder(true, order);
+                        Toast.makeText(this, "订单" + order.getOrder() + "写入成功", Toast.LENGTH_LONG).show();
+                    } catch (Exception e) {
+                        Toast.makeText(this, "订单" + order.getOrder() + "写入失败" + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                    order = null;
+                }
+                break;
+            case R.id.order_fail:
+                if (order != null) {
+                    try {
+                        OrderFileManager.getInstance().writeOrder(false, order);
+                        Toast.makeText(this, "订单" + order.getOrder() + "写入成功", Toast.LENGTH_LONG).show();
+                    } catch (Exception e) {
+                        Toast.makeText(this, "订单" + order.getOrder() + "写入失败" + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                    order = null;
+                }
+                break;
+        }
+    }
+
     class RequestParamsHandler extends Handler {
-
-
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
@@ -101,6 +130,9 @@ public class NotebookActivity extends android.app.Activity {
                     break;
                 case HANDLER_MESSAGE_WHAT_INITED:
                     initLogView();
+                    break;
+                case HANDLER_MESSAGE_WHAT_ORDER:
+                    NotebookActivity.this.order = (Order) msg.obj;
                     break;
             }
         }

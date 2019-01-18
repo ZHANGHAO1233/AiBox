@@ -172,9 +172,6 @@ public class CameraActivity extends ActivityDemo implements OnClickListener, OnF
                 public void run() {
                     ILog.d("start to recognize open picture");
                     RetailVisManager.openDoor("just_test", params);
-                    List<Classifier.Recognition> recognitions = RetailVisManager.getOpenClassify(0);
-                    Toast.makeText(CameraActivity.this, "recognitions open:" + recognitions.size(), Toast.LENGTH_SHORT).show();
-                    ILog.d("recognitions open:" + recognitions.size());
                 }
             });
         } else {
@@ -184,9 +181,6 @@ public class CameraActivity extends ActivityDemo implements OnClickListener, OnF
                     try {
                         ILog.d("start to recognize close picture");
                         RetailVisManager.closeDoor("just_test", params);
-                        List<Classifier.Recognition> recognitions = RetailVisManager.getOpenClassify(0);
-                        Toast.makeText(CameraActivity.this, "recognitions close:" + recognitions.size(), Toast.LENGTH_SHORT).show();
-                        ILog.d("recognitions close:" + recognitions.size());
                     } catch (Exception e) {
                         e.printStackTrace();
                         ILog.d("recognize close picture excetion:" + e.getMessage());
