@@ -36,9 +36,7 @@ public class SerialReadThread extends Thread {
                 break;
             }
             try {
-
                 int available = mInputStream.available();
-
                 if (available > 0) {
                     size = mInputStream.read(received);
                     if (size > 0) {
@@ -46,11 +44,14 @@ public class SerialReadThread extends Thread {
                     }
                 } else {
                     // 暂停一点时间，免得一直循环造成CPU占用率过高
-                    SystemClock.sleep(1);
+                    SystemClock.sleep(10);
+                    ILog.d(TAG, "InputStream is unavailable");
                 }
             } catch (IOException e) {
+                ILog.d(TAG, "串口打开失败" + e.getMessage());
+                // 暂停一点时间，免得一直循环造成CPU占用率过高
+                SystemClock.sleep(10);
             }
-            //Thread.yield();
         }
 
         ILog.d(TAG, "结束读进程");

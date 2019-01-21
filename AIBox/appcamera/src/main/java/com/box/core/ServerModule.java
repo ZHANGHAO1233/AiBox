@@ -38,7 +38,7 @@ public class ServerModule {
     private String accessId = "jm6S8u";
     private int max = 1000000;//最大连接次数
     private int connectCount = 0;//已连接次数
-    private int pingDiff = 5 * 60 * 1000;//检测是否断线间隔,3分钟
+    private int pingDiff =  60 * 1000;//检测是否断线间隔,1分钟
     private int reConnectDiff = 12000;//重连间隔
     private int connectTimeout = 10000;//连接超时时间
     private Timer timer;
