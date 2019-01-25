@@ -45,7 +45,6 @@ public class SerialReadThread extends Thread {
                 } else {
                     // 暂停一点时间，免得一直循环造成CPU占用率过高
                     SystemClock.sleep(10);
-                    ILog.d(TAG, "InputStream is unavailable");
                 }
             } catch (IOException e) {
                 ILog.d(TAG, "串口打开失败" + e.getMessage());

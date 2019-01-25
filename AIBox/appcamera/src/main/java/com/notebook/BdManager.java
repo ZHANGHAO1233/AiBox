@@ -109,6 +109,8 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
                             ILog.d(TAG, "匹配到" + command + "对应串口:" + manager.toString());
                             this.serials.put(key, manager);
                             continue k;
+                        } else {
+                            manager.close();
                         }
                     }
                 }

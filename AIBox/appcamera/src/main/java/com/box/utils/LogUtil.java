@@ -7,6 +7,8 @@ import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
+import org.apache.commons.lang3.time.DateFormatUtils;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -14,10 +16,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 /**
@@ -29,8 +29,7 @@ public class LogUtil {//日志管理工具�?
     private static String logPath = "";//log日志存放路径
     private static String logName = "";//日志文件名称
     private static final String FILE_END_PREFIX = ".txt";//日志命名后缀
-    private static final int logSaveDays = 7;
-    private static String deleteLogDate = "";
+    private static final int logSaveDays = 3;
 
 
     public static void init(Context context) {
@@ -39,9 +38,9 @@ public class LogUtil {//日志管理工具�?
             Log.d(TAG, "logPath == null ，未初始化LogToFile");
             return;
         }
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA);
-        String time = dateFormat.format(new Date());
-        logName = logPath + File.separator + "logs" + time + FILE_END_PREFIX;//log日志�?
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String time = format.format(new Date().getTime());//这个就是把时间戳经过处理得到期望格式的时间
+        logName = logPath + File.separator + "logs" + time + FILE_END_PREFIX;//log日志
         Log.d(TAG, "logName：" + logName);
         try {
             File file = new File(logPath);
@@ -60,39 +59,48 @@ public class LogUtil {//日志管理工具�?
         builder.append("打开程序；" + "\r\n");
         writeMsg(TAG, new String(builder));
 
-        deleteOutdateLog(time);
+        deleteOutdateLog();
     }
 
-    private static void deleteOutdateLog(String date) {
+    private static void deleteOutdateLog() {
         try {
-            if (!TextUtils.isEmpty(date) && !date.equals(deleteLogDate)) {
-                deleteLogDate = date;
-                File files[] = new File(logPath).listFiles();
-                if (files != null && files.length > logSaveDays) {
-                    List<String> fs = new ArrayList<>(logSaveDays);
-                    Date dNow = new Date();   //当前时间
-                    Date dBefore;
-                    Calendar calendar = Calendar.getInstance(); //得到日历
-                    calendar.setTime(dNow);//把当前时间赋给日历
-                    calendar.add(Calendar.DAY_OF_MONTH, -1);  //设置为前一天
-                    dBefore = calendar.getTime();   //得到前一天的时间
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA);
-                    for (int i = 0; i < logSaveDays; i++) {
-                        calendar.add(Calendar.DAY_OF_MONTH, 0 - i);
-                        String time = dateFormat.format(dBefore);
-                        String filename = "logs" + time + FILE_END_PREFIX;
-                        fs.add(filename);
-                    }
-                    for (File file : files) {
-                        if (!fs.contains(file.getName())) {
-                            file.delete();
+            File files[] = new File(logPath).listFiles();
+            for (int i = 0; i < files.length; i++) {
+                if (files[i].isFile() && files[i].getName().contains("logs")) {
+                    try {
+                        File ff = files[i];
+                        long time = ff.lastModified();
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTimeInMillis(time);
+                        Date lastModified = cal.getTime();
+                        //(int)(today.getTime() - lastModified.getTime())/86400000;
+                        long days = getDistDates(new Date(), lastModified);
+                        if (days >= logSaveDays) {
+                            files[i].delete();
                         }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * @param startDate
+     * @param endDate
+     */
+    public static long getDistDates(Date startDate, Date endDate) {
+        long totalDate = 0;
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(startDate);
+        long timestart = calendar.getTimeInMillis();
+        calendar.setTime(endDate);
+        long timeend = calendar.getTimeInMillis();
+        totalDate = Math.abs((timeend - timestart)) / (1000 * 60 * 60 * 24);
+        return totalDate;
     }
 
     public static void writeBroadcast(boolean receiveOrSend, Intent intent) {
@@ -118,7 +126,7 @@ public class LogUtil {//日志管理工具�?
      * @return
      */
     private static String getFilePath() {
-        String path = Environment.getExternalStorageDirectory().getAbsolutePath();
+        String path = Environment.getExternalStorageDirectory().getAbsolutePath()+File.separator+"AILogs";
         File file = new File(path);
         ILog.d("path:" + path + ":exists:" + file.exists());
         if (!file.exists()) {
@@ -128,9 +136,7 @@ public class LogUtil {//日志管理工具�?
     }
 
     /**
-     * 将log信息写入文件�?
-     *
-     * @param msg
+     * 将log信息写入文件
      */
     public static void writeMsg(String tag, String msg) {
         SimpleDateFormat format0 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
