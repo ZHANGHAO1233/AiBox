@@ -96,24 +96,24 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         this.serials = new HashMap<>();
         k:
         for (String path : paths) {
-            if (path.toUpperCase().contains("USB")) {
-                Device device = new Device(path, BAUDRATE_DEFAULT_VALUE);
-                SerialPortManager manager = new SerialPortManager();
-                boolean opend = manager.open(device) != null;
-                ILog.d(TAG, device.toString() + (opend ? ",打开成功" : ",打开失败"));
-                if (opend) {
-                    for (String key : this.commandMap.keySet()) {
-                        String command = this.commandMap.get(key).get(0);
-                        Map<String, Double> data = manager.sendCommand(Collections.singletonList(command));
-                        if (data.get(command) != null) {
-                            ILog.d(TAG, "匹配到" + command + "对应串口:" + manager.toString());
-                            this.serials.put(key, manager);
-                            continue k;
-                        } else {
-                            manager.close();
-                        }
+//            if (path.toUpperCase().contains("USB")) {
+            Device device = new Device(path, BAUDRATE_DEFAULT_VALUE);
+            SerialPortManager manager = new SerialPortManager();
+            boolean opend = manager.open(device) != null;
+            ILog.d(TAG, device.toString() + (opend ? ",打开成功" : ",打开失败"));
+            if (opend) {
+                for (String key : this.commandMap.keySet()) {
+                    String command = this.commandMap.get(key).get(0);
+                    Map<String, Double> data = manager.sendCommand(Collections.singletonList(command));
+                    if (data.get(command) != null) {
+                        ILog.d(TAG, "匹配到" + command + "对应串口:" + manager.toString());
+                        this.serials.put(key, manager);
+                        continue k;
+                    } else {
+                        manager.close();
                     }
                 }
+//                }
             }
         }
         ILog.d(TAG, "初始化" + this.serials.size() + "个串口");
