@@ -14,6 +14,7 @@ import com.consts.TimeConsts;
 import org.json.JSONArray;
 
 import java.util.Date;
+import java.util.List;
 
 import static com.box.utils.ILog.TIME_TAG;
 import static com.notebook.BdManager.TRANSACTION_STATUS_RESULT;
@@ -56,5 +57,10 @@ public class BdCallback implements IRetailCallBack {
         String detail = TimeConsts.write();
         ILog.d(TIME_TAG, detail);
         OsModule.get().sendRecognizeResult(products);
+    }
+
+    @Override
+    public void callbackOrderWithStrange(String s, Exception e, JSONArray jsonArray, List<String> list) {
+
     }
 }

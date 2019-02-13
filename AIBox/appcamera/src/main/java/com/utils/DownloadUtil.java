@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +43,8 @@ public class DownloadUtil {
      * @param url      下载连接
      * @param listener 下载监听
      */
-    public void download(final String url, final String camera, final OnDownloadListener listener, final boolean isOpenDoor) {
+    public void download(final String url, final String camera, final String file_name,
+                         final OnDownloadListener listener, final boolean isOpenDoor) {
         Request request = new Request.Builder().url(url).build();
         //异步请求
         okHttpClient.newCall(request).enqueue(new Callback() {
@@ -53,17 +56,21 @@ public class DownloadUtil {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                InputStream is = response.body().byteStream();
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                byte[] buf = new byte[2048];
-                int len;
-                while ((len = is.read(buf)) != -1) {
-                    outputStream.write(buf, 0, len);
-                }
-                byte[] bu = outputStream.toByteArray();
-                Bitmap bitmap = BitmapFactory.decodeByteArray(bu, 0, bu.length);
+                //将响应数据转化为输入流数据
+                InputStream inputStream=response.body().byteStream();
+                //将输入流数据转化为Bitmap位图数据
+                Bitmap bitmap= BitmapFactory.decodeStream(inputStream);
+                File file=new File(file_name);
+                file.createNewFile();
+                //创建文件输出流对象用来向文件中写入数据
+                FileOutputStream out=new FileOutputStream(file);
+                //将bitmap存储为jpg格式的图片
+                bitmap.compress(Bitmap.CompressFormat.JPEG,100,out);
+                //刷新文件流
+                out.flush();
+                out.close();
                 //下载完成
-                listener.onDownloadSuccess(camera, bitmap, isOpenDoor);
+                listener.onDownloadSuccess(camera, file.getPath(), isOpenDoor);
             }
         });
     }
@@ -72,7 +79,7 @@ public class DownloadUtil {
         /**
          * 下载成功之后的文件
          */
-        void onDownloadSuccess(String camera, Bitmap bitmap, boolean isOpenDoor);
+        void onDownloadSuccess(String camera, String path, boolean isOpenDoor);
 
         /**
          * 下载异常信息

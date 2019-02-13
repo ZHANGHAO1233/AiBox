@@ -1,7 +1,6 @@
 package com.notebook;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -14,6 +13,7 @@ import com.bean.OpenParam;
 import com.box.core.OsModule;
 import com.box.utils.ILog;
 import com.consts.TimeConsts;
+import com.lib.sdk.bean.StringUtils;
 import com.mgr.serial.comn.Device;
 import com.mgr.serial.comn.SerialPortManager;
 import com.mgr.serial.comn.util.GsonUtil;
@@ -49,7 +49,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     private String urls[] = new String[]{http + ipAndPort + "/cap_0.jpg", http + ipAndPort + "/cap_1.jpg", http + ipAndPort + "/cap_2.jpg", http + ipAndPort + "/cap_3.jpg"};
     //    private String urls[] = new String[]{"https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png"};
     //    public String urls[] = new String[]{"http://192.168.1.185:8080/cap_0.jpg", "http://192.168.1.185:8080/cap_1.jpg", "http://192.168.1.185:8080/cap_2.jpg", "http://192.168.1.185:8080/cap_3.jpg"};
-    private Map<String, Bitmap> paths = new HashMap<>();
+    private Map<String, String> paths = new HashMap<>();
     private volatile int finishNum = urls.length;
     private boolean hasDownLoadFinish = true;
     private Handler handler;
@@ -202,10 +202,10 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     }
 
     @Override
-    public void onDownloadSuccess(String camera, Bitmap bitmap, boolean isOpenDoor) {
+    public void onDownloadSuccess(String camera, String path, boolean isOpenDoor) {
         ILog.d(TIME_TAG, new Date().getTime() + ",图片下载成功,camera:" + camera);
-        if (bitmap != null) {
-            paths.put(camera, bitmap);
+        if (!StringUtils.isStringNULL(path)) {
+            paths.put(camera, path);
         }
         checkDownloadFinish(isOpenDoor);
     }
@@ -281,10 +281,9 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
                     }
                     List<RetailInputParam> params = new ArrayList<>();
                     for (String camera : paths.keySet()) {
-                        Bitmap bitmap = paths.get(camera);
+                        String path = paths.get(camera);
                         List<Double> weights = getWeight(serialResults, Integer.parseInt(camera));
-                        RetailInputParam retailInputParam = new RetailInputParam(bitmap,
-                                camera, weights);
+                        RetailInputParam retailInputParam = new RetailInputParam(path, camera, weights);
                         params.add(retailInputParam);
                     }
                     if (params.size() > 0) {
