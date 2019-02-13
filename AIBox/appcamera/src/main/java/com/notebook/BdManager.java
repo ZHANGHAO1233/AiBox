@@ -1,6 +1,7 @@
 package com.notebook;
 
 import android.app.Activity;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -12,6 +13,7 @@ import com.bean.CloseParam;
 import com.bean.OpenParam;
 import com.box.core.OsModule;
 import com.box.utils.ILog;
+import com.box.utils.TimeUtil;
 import com.consts.TimeConsts;
 import com.lib.sdk.bean.StringUtils;
 import com.mgr.serial.comn.Device;
@@ -46,8 +48,9 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     private static BdManager bd;
     private final String ipAndPort = "192.168.1.186:8080";
     private final String http = "http://";
-    private String urls[] = new String[]{http + ipAndPort + "/cap_0.jpg", http + ipAndPort + "/cap_1.jpg", http + ipAndPort + "/cap_2.jpg", http + ipAndPort + "/cap_3.jpg"};
-    //    private String urls[] = new String[]{"https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png"};
+    private String downloadDir = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "AiImages";
+//    private String urls[] = new String[]{http + ipAndPort + "/cap_0.jpg", http + ipAndPort + "/cap_1.jpg", http + ipAndPort + "/cap_2.jpg", http + ipAndPort + "/cap_3.jpg"};
+        private String urls[] = new String[]{"https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png"};
     //    public String urls[] = new String[]{"http://192.168.1.185:8080/cap_0.jpg", "http://192.168.1.185:8080/cap_1.jpg", "http://192.168.1.185:8080/cap_2.jpg", "http://192.168.1.185:8080/cap_3.jpg"};
     private Map<String, String> paths = new HashMap<>();
     private volatile int finishNum = urls.length;
@@ -65,6 +68,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     private Map<String, SerialPortManager> serials;
     private Map<String, List<String>> commandMap;
     private static final String BAUDRATE_DEFAULT_VALUE = "115200";
+    private String currentImageDir;
 
     private BdManager() {
     }
@@ -135,7 +139,17 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         OsModule.get().addDoorListener(this);
         initBdConfig();
         initSerialCommands();
+        createPath(downloadDir);
         openSerialPorts();
+    }
+
+    private void createPath(String path) {
+        if (!TextUtils.isEmpty(path)) {
+            File f = new File(path);
+            if (f.exists()) {
+                f.mkdirs();
+            }
+        }
     }
 
 
@@ -195,8 +209,15 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
             paths.clear();
             finishNum = 0;
             hasDownLoadFinish = false;
+            String currentTime = TimeUtil.getTimeStr();
+            String currentDirTime = TimeUtil.getTimeStr2();
+            if (isOpenDoor) {
+                currentImageDir = downloadDir + File.separator + currentDirTime;
+                createPath(currentImageDir);
+            }
+            String imageName = isOpenDoor ? linkChar + "open" + linkChar + currentTime + ".jpg" : linkChar + "close" + linkChar + currentTime + ".jpg";
             for (int i = 0; i < urls.length; i++) {
-                DownloadUtil.get().download(urls[i], i + "", this, isOpenDoor);
+                DownloadUtil.get().download(urls[i], i + "", imageName,this, isOpenDoor);
             }
         }
     }
