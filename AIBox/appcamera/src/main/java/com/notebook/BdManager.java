@@ -16,6 +16,7 @@ import com.box.utils.ILog;
 import com.box.utils.TimeUtil;
 import com.consts.TimeConsts;
 import com.lib.sdk.bean.StringUtils;
+import com.mgr.ImageCacheManager;
 import com.mgr.serial.comn.Device;
 import com.mgr.serial.comn.SerialPortManager;
 import com.mgr.serial.comn.util.GsonUtil;
@@ -48,7 +49,6 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     private static BdManager bd;
     private final String ipAndPort = "192.168.1.186:8080";
     private final String http = "http://";
-    private String downloadDir = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "AiImages";
     private String urls[] = new String[]{http + ipAndPort + "/cap_0.jpg", http + ipAndPort + "/cap_1.jpg", http + ipAndPort + "/cap_2.jpg", http + ipAndPort + "/cap_3.jpg"};
     //    private String urls[] = new String[]{"https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png"};
     //    public String urls[] = new String[]{"http://192.168.1.185:8080/cap_0.jpg", "http://192.168.1.185:8080/cap_1.jpg", "http://192.168.1.185:8080/cap_2.jpg", "http://192.168.1.185:8080/cap_3.jpg"};
@@ -139,7 +139,6 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         OsModule.get().addDoorListener(this);
         initBdConfig();
         initSerialCommands();
-        createPath(downloadDir);
         openSerialPorts();
     }
 
@@ -212,7 +211,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
             String currentTime = TimeUtil.getTimeStr();
             String currentDirTime = TimeUtil.getTimeStr2();
             if (isOpenDoor) {
-                currentImageDir = downloadDir + File.separator + currentDirTime;
+                currentImageDir = ImageCacheManager.getInstance().getBase_image_path() + File.separator + currentDirTime;
                 createPath(currentImageDir);
             }
             String imageName = isOpenDoor ? linkChar + "open" + linkChar + currentTime + ".jpg" : linkChar + "close" + linkChar + currentTime + ".jpg";

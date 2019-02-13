@@ -13,6 +13,7 @@ import com.idata.iot.sdk.api.IDataApi;
 import com.lib.funsdk.support.FunPath;
 import com.lib.funsdk.support.FunSupport;
 import com.mgr.ConfigPropertiesManager;
+import com.mgr.ImageCacheManager;
 import com.mgr.UncaughtExceptionManager;
 import com.mgr.serial.comn.SerialPortsManager;
 import com.notebook.BdManager;
@@ -30,7 +31,8 @@ public class MyApplication extends Application {
     public void onCreate() {
         super.onCreate();
         context = this;
-        LogUtil.init(this);
+        LogUtil.init();
+        ImageCacheManager.getInstance().startImageCacheCleaning();
         NetworkUtil.init(this);
         CrashHandler.getInstance().init(this);
         OsModule.get().init(this);

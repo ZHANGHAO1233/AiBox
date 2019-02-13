@@ -1,24 +1,19 @@
 package com.box.utils;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
-import org.apache.commons.lang3.time.DateFormatUtils;
-
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
 
 /**
  * Created by DELL on 2017/11/9.
@@ -32,7 +27,7 @@ public class LogUtil {//日志管理工具�?
     private static final int logSaveDays = 3;
 
 
-    public static void init(Context context) {
+    public static void init() {
         logPath = getFilePath();//获得文件储存路径,在后面加"/Logs"建立子文件夹
         if (TextUtils.isEmpty(logPath)) {
             Log.d(TAG, "logPath == null ，未初始化LogToFile");
@@ -126,7 +121,7 @@ public class LogUtil {//日志管理工具�?
      * @return
      */
     private static String getFilePath() {
-        String path = Environment.getExternalStorageDirectory().getAbsolutePath()+File.separator+"AILogs";
+        String path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "AILogs";
         File file = new File(path);
         ILog.d("path:" + path + ":exists:" + file.exists());
         if (!file.exists()) {
@@ -148,8 +143,6 @@ public class LogUtil {//日志管理工具�?
             fos = new FileOutputStream(logName, true);//这里的第二个参数代表追加还是覆盖，true为追加，flase为覆�?
             bw = new BufferedWriter(new OutputStreamWriter(fos));
             bw.write(tag + ":" + msg);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
