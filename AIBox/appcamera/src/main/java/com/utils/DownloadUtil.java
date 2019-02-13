@@ -56,21 +56,34 @@ public class DownloadUtil {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                //将响应数据转化为输入流数据
-                InputStream inputStream=response.body().byteStream();
-                //将输入流数据转化为Bitmap位图数据
-                Bitmap bitmap= BitmapFactory.decodeStream(inputStream);
-                File file=new File(file_name);
-                file.createNewFile();
-                //创建文件输出流对象用来向文件中写入数据
-                FileOutputStream out=new FileOutputStream(file);
-                //将bitmap存储为jpg格式的图片
-                bitmap.compress(Bitmap.CompressFormat.JPEG,100,out);
-                //刷新文件流
-                out.flush();
-                out.close();
-                //下载完成
-                listener.onDownloadSuccess(camera, file.getPath(), isOpenDoor);
+                InputStream is = null;
+                byte[] buf = new byte[2048];
+                int len = 0;
+                FileOutputStream fos = null;
+                File file = new File(file_name);
+                try {
+                    is = response.body().byteStream();
+                    fos = new FileOutputStream(file);
+                    while ((len = is.read(buf)) != -1) {
+                        fos.write(buf, 0, len);
+                    }
+                    fos.flush();
+                    //下载完成
+                    listener.onDownloadSuccess(camera,file_name, isOpenDoor);
+                } catch (Exception e) {
+                    listener.onDownloadFailed(e, isOpenDoor);
+                } finally {
+                    try {
+                        if (is != null) {
+                            is.close();
+                        }
+                        if (fos != null) {
+                            fos.close();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         });
     }

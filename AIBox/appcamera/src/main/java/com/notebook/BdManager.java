@@ -49,8 +49,8 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     private final String ipAndPort = "192.168.1.186:8080";
     private final String http = "http://";
     private String downloadDir = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "AiImages";
-//    private String urls[] = new String[]{http + ipAndPort + "/cap_0.jpg", http + ipAndPort + "/cap_1.jpg", http + ipAndPort + "/cap_2.jpg", http + ipAndPort + "/cap_3.jpg"};
-        private String urls[] = new String[]{"https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png"};
+    private String urls[] = new String[]{http + ipAndPort + "/cap_0.jpg", http + ipAndPort + "/cap_1.jpg", http + ipAndPort + "/cap_2.jpg", http + ipAndPort + "/cap_3.jpg"};
+    //    private String urls[] = new String[]{"https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png"};
     //    public String urls[] = new String[]{"http://192.168.1.185:8080/cap_0.jpg", "http://192.168.1.185:8080/cap_1.jpg", "http://192.168.1.185:8080/cap_2.jpg", "http://192.168.1.185:8080/cap_3.jpg"};
     private Map<String, String> paths = new HashMap<>();
     private volatile int finishNum = urls.length;
@@ -146,7 +146,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     private void createPath(String path) {
         if (!TextUtils.isEmpty(path)) {
             File f = new File(path);
-            if (f.exists()) {
+            if (!f.exists()) {
                 f.mkdirs();
             }
         }
@@ -217,7 +217,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
             }
             String imageName = isOpenDoor ? linkChar + "open" + linkChar + currentTime + ".jpg" : linkChar + "close" + linkChar + currentTime + ".jpg";
             for (int i = 0; i < urls.length; i++) {
-                DownloadUtil.get().download(urls[i], i + "", imageName,this, isOpenDoor);
+                DownloadUtil.get().download(urls[i], i + "", currentImageDir + File.separator + i + imageName, this, isOpenDoor);
             }
         }
     }

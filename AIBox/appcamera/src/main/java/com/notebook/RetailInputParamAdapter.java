@@ -15,6 +15,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.signature.StringSignature;
 import com.idata.aibox.R;
+import com.lib.sdk.bean.StringUtils;
 import com.mgr.serial.comn.util.GsonUtil;
 
 import java.io.ByteArrayOutputStream;
@@ -71,11 +72,15 @@ public class RetailInputParamAdapter extends BaseAdapter {
             viewHolder = (ViewHolder) contextView.getTag();
         }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        param.getBitmap().compress(Bitmap.CompressFormat.JPEG, 50, baos);
-        byte[] bytes = baos.toByteArray();
-        Glide.with(this.context).load(bytes).diskCacheStrategy(DiskCacheStrategy.NONE)
-                .signature(new StringSignature(new Date().getTime() + "")).into(viewHolder.imv_camera);
-        viewHolder.imv_camera.setImageBitmap(param.getBitmap());
+        if(param.getBitmap()!=null){
+            param.getBitmap().compress(Bitmap.CompressFormat.JPEG, 50, baos);
+            byte[] bytes = baos.toByteArray();
+            Glide.with(this.context).load(bytes).diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .signature(new StringSignature(new Date().getTime() + "")).into(viewHolder.imv_camera);
+        }else if(!StringUtils.isStringNULL(param.getFilePath())){
+            Glide.with(this.context).load(param.getFilePath()).diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .signature(new StringSignature(new Date().getTime() + "")).into(viewHolder.imv_camera);
+        }
         viewHolder.tv_camera.setText("摄像头编号：" + param.getMcastId());
         viewHolder.tv_weights.setText("重量集：" + GsonUtil.toJson(param.getGetWeightList()));
         return contextView;
