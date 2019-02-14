@@ -20,8 +20,6 @@ import java.util.UUID;
 
 import static com.box.utils.ILog.TIME_TAG;
 import static com.consts.HandleConsts.HANDLER_MESSAGE_WHAT_INITED;
-import static com.notebook.BdManager.TRANSACTION_STATUS_INITED;
-import static com.notebook.BdManager.TRANSACTION_STATUS_RESULT;
 
 /**
  * Created by Curry on 2018/7/16.
@@ -80,12 +78,8 @@ public class OsModule {
         }
         //落锁
         ILog.d(TIME_TAG, new Date().getTime() + ",接收到开锁指令");
-        boolean unlock = IDataApi.XblDoorLock.isLockDown();//读取锁状态，返回true是落锁状态，返回false是上锁状态
-        ILog.d(TAG, "当前门锁状态:" + (unlock ? "开启" : "关闭"));
-        ILog.d(TAG, "当前订单状态:" + BdManager.transactionStatus);
-        if (!unlock || BdManager.transactionStatus == TRANSACTION_STATUS_RESULT) {
+        if (BdManager.getBd().setTransactionStatusInited()) {
             this.wxUserId = wxUserId;
-            BdManager.transactionStatus = TRANSACTION_STATUS_INITED;
             //取照片
             ILog.d(TAG, "--captureImageBeforeunlock  door before,get the picture:");
             for (OnDoorStatusListener listener : doorListeners) {

@@ -109,7 +109,6 @@ public class ServerModule {
                     ILog.d(TIME_TAG, new Date().getTime() + "，连接打开onOpen!");
                     if (listener != null)
                         listener.onOpen();
-
                     //连接次数归零，取消定时连接任务
                     cancelTimer();
 
@@ -154,7 +153,7 @@ public class ServerModule {
 
                 @Override
                 public void onClose(int code, String reason, boolean remote) {
-                    ILog.d("关闭断开连接onClose（）,reason:" + reason + ":remote:" + remote + ":code:" + code);
+                    ILog.d(TIME_TAG, "关闭断开连接onClose（）,reason:" + reason + ":remote:" + remote + ":code:" + code);
                     if (listener != null)
                         listener.onClosed();
                     if (CloseFrame.ABNORMAL_CLOSE == code || CloseFrame.NORMAL == code || code == -1) {
@@ -167,7 +166,7 @@ public class ServerModule {
 
                 @Override
                 public void onClosing(int code, String reason, boolean remote) {
-                    ILog.d("连接断开中:reason:" + reason + ":remote:" + remote + ":code:" + code);
+                    ILog.d(TIME_TAG, "连接断开中:reason:" + reason + ":remote:" + remote + ":code:" + code);
                     if (listener != null)
                         listener.onClosing();
                     super.onClosing(code, reason, remote);
@@ -176,7 +175,7 @@ public class ServerModule {
                 @Override
                 public void onError(Exception ex) {
                     ex.printStackTrace();
-                    ILog.d("onError（） exception:" + ex.getMessage());
+                    ILog.d(TIME_TAG, "onError（） exception:" + ex.getMessage());
                 }
             };
             //设置间隔检查
@@ -210,10 +209,10 @@ public class ServerModule {
      */
     public void sendMessage(String message) {
         if (socketClient != null && socketClient.isOpen()) {
-            ILog.d("发送的消息:" + message);
+            ILog.d(TIME_TAG,"发送的消息:" + message);
             socketClient.send(message);
         } else {
-            ILog.d("已经断线,需要重新。。。");
+            ILog.d(TIME_TAG,"已经断线,需要重新。。。");
             if (timer == null) {
                 reconnet();
             }
@@ -230,10 +229,10 @@ public class ServerModule {
             public void run() {
                 try {
                     //打印一下网络信息
-                    ILog.d("准备重连，检查网络状况！");
+                    ILog.d(TIME_TAG,"准备重连，检查网络状况！");
                     if (NetworkUtil.isNetworkAvailable(MyApplication.getContext())) {
                         if (socketClient.isClosed() && !socketClient.reconnectBlocking()) {
-                            ILog.d("正在进行第" + (connectCount + 1) + "次重连");
+                            ILog.d(TIME_TAG,"正在进行第" + (connectCount + 1) + "次重连");
                             connectCount++;
                         }
                     }
@@ -271,7 +270,7 @@ public class ServerModule {
                 while (goon) {
                     Thread.sleep(pingDiff);
                     if (isConnecting()) {
-                        ILog.d("send ping()");
+                        ILog.d(TIME_TAG,"send ping()");
                         socketClient.sendPing();
                     }
                 }

@@ -40,27 +40,30 @@ public class BdCallback implements IRetailCallBack {
             mess += products;
         }
         ILog.d(TIME_TAG, mess);
-        BdManager.transactionStatus = TRANSACTION_STATUS_RESULT;
-        if (this.handler != null) {
-            Message message = new Message();
-            message.what = HandleConsts.HANDLER_MESSAGE_WHAT_ORDER;
-            String error_mess = e == null ? "" : e.getMessage();
-            String products_mess = products == null ? "" : products.toString();
-            message.obj = new Order(order, products_mess, error_mess);
-            this.handler.sendMessage(message);
+        if (BdManager.getBd().setTransactionStatusResult(order)) {
+            if (this.handler != null) {
+                Message message = new Message();
+                message.what = HandleConsts.HANDLER_MESSAGE_WHAT_ORDER;
+                String error_mess = e == null ? "" : e.getMessage();
+                String products_mess = products == null ? "" : products.toString();
+                message.obj = new Order(order, products_mess, error_mess);
+                this.handler.sendMessage(message);
+            }
+            TimeConsts.ORDER_END_TIME = now;
+            ILog.d(TIME_TAG, now + "，transactionStatus 更新为 " + TRANSACTION_STATUS_RESULT);
+            ILog.d(TIME_TAG, "SDK上传前处理时间" + (BaiduGlobalVar.endSDKTime - BaiduGlobalVar.startSDKTime));
+            ILog.d(TIME_TAG, "SDK网络返回后处理时间:" + (System.currentTimeMillis() - BaiduGlobalVar.startResponseTime));
+            ILog.d(TIME_TAG, "调用关门到返回的时间：time:" + (BaiduGlobalVar.endNetTime - BaiduGlobalVar.endSDKTime));
+            String detail = TimeConsts.write();
+            ILog.d(TIME_TAG, detail);
+            if(products!=null){
+                OsModule.get().sendRecognizeResult(products);
+            }
         }
-        TimeConsts.ORDER_END_TIME = now;
-        ILog.d(TIME_TAG, now + "，transactionStatus 更新为 " + TRANSACTION_STATUS_RESULT);
-        ILog.d(TIME_TAG, "SDK上传前处理时间" + (BaiduGlobalVar.endSDKTime - BaiduGlobalVar.startSDKTime));
-        ILog.d(TIME_TAG, "SDK网络返回后处理时间:" + (System.currentTimeMillis() - BaiduGlobalVar.startResponseTime));
-        ILog.d(TIME_TAG, "调用关门到返回的时间：time:" + (BaiduGlobalVar.endNetTime - BaiduGlobalVar.endSDKTime));
-        String detail = TimeConsts.write();
-        ILog.d(TIME_TAG, detail);
-        OsModule.get().sendRecognizeResult(products);
     }
 
     @Override
     public void callbackOrderWithStrange(String s, Exception e, JSONArray jsonArray, List<String> list) {
-
+        ILog.d(TIME_TAG, "回调新方法");
     }
 }

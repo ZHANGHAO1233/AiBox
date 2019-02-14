@@ -1,7 +1,6 @@
 package com.notebook;
 
 import android.app.Activity;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -33,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.box.utils.ILog.TIME_TAG;
-import static com.consts.HandleConsts.HANDLER_MESSAGE_WHAT_MESS;
 import static com.consts.HandleConsts.HANDLER_MESSAGE_WHAT_PARMA;
 import static com.consts.TimeConsts.CLOSE_DISPOSAL_DATA_END_TIME;
 import static com.consts.TimeConsts.CLOSE_DISPOSAL_DATA_START_TIME;
@@ -55,13 +53,13 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     private Map<String, String> paths = new HashMap<>();
     private volatile int finishNum = urls.length;
     private boolean hasDownLoadFinish = true;
-    private Handler handler;
-    private volatile String currentOrder = "";//规则，设备sn+时间戳
-    public static int TRANSACTION_STATUS_INITED = 0;//订单初始化
+    private Handler messHandler;
+    private static final int TRANSACTION_STATUS_INITED = 0;//订单初始化
     public static int TRANSACTION_STATUS_OPENDOOR = 1;//订单开门
     public static int TRANSACTION_STATUS_CLOSEDOOR = 2;//订单关门
     public static int TRANSACTION_STATUS_RESULT = 3;//无订单状态
-    public static volatile int transactionStatus = TRANSACTION_STATUS_RESULT;
+    public int transactionStatus = TRANSACTION_STATUS_RESULT;
+    private volatile String currentOrder = "";//规则，设备sn+时间戳
     public Map<String, Double> serialResults;
 
     private final String linkChar = "-";
@@ -69,8 +67,20 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     private Map<String, List<String>> commandMap;
     private static final String BAUDRATE_DEFAULT_VALUE = "115200";
     private String currentImageDir;
+    private Handler timeOutHandler;
+    private Runnable timeOutRunnable;
 
     private BdManager() {
+    }
+
+    private void initTimeOutHandler() {
+        this.timeOutHandler = new Handler();
+        this.timeOutRunnable = new Runnable() {
+            @Override
+            public void run() {
+                setTransactionStatusTimeOut();
+            }
+        };
     }
 
     private void initSerialCommands() {
@@ -135,11 +145,12 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     }
 
     public void init(Handler handler) {
-        this.handler = handler;
+        this.messHandler = handler;
         OsModule.get().addDoorListener(this);
         initBdConfig();
         initSerialCommands();
         openSerialPorts();
+        initTimeOutHandler();
     }
 
     private void createPath(String path) {
@@ -173,7 +184,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     }
 
     public void initBdConfig() {
-        RetailVisManager.load((Activity) null, new BdCallback(this.handler));
+        RetailVisManager.load((Activity) null, new BdCallback(this.messHandler));
         RetailVisManager.setAppid(OsModule.get().getSn());
         RetailVisManager.setSK("K1GhMzLG6YAWY3oDSWCjTWIiKo7SjDSP");
         RetailVisManager.setAK("W7SFpfC5o7tS3d4CQugZ8YEglb9QVEzN");
@@ -257,8 +268,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
             @Override
             public void run() {
                 Looper.prepare();
-                if (BdManager.transactionStatus == TRANSACTION_STATUS_RESULT) {
-                    BdManager.transactionStatus = TRANSACTION_STATUS_INITED;
+                if (setTransactionStatusInited()) {
                     TimeConsts.OPEN_COLLECTION_START_TIME = new Date().getTime();
                     downloadImages(true);
                     serialResults = null;
@@ -314,89 +324,19 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
                             }
                         });
                         if (isOpenDoor) {
-                            //当前状态为已初始化状态
-                            if (transactionStatus == TRANSACTION_STATUS_INITED) {
-                                now = new Date().getTime();
-                                OPEN_DISPOSAL_DATA_END_TIME = now;
-                                //参数获取完整后，才开门
-                                OsModule.get().unlock();
-                                try {
-                                    currentOrder = OsModule.get().getSn() + "-" + System.currentTimeMillis();
-                                    now = new Date().getTime();
-                                    TimeConsts.OPEN_UPLOAD_DATA_START_TIME = now;
-                                    ILog.d(TIME_TAG, now + ",开始提交开门数据");
-                                    boolean succ = RetailVisManager.openDoor(currentOrder, params);
-                                    transactionStatus = succ ? TRANSACTION_STATUS_OPENDOOR : TRANSACTION_STATUS_RESULT;
-                                    now = new Date().getTime();
-                                    ILog.d(TIME_TAG, now + "提交开门数据" + (succ ? "成功" : "失败") + "\n，transactionStatus 更新为 " + transactionStatus);
-                                    TimeConsts.OPEN_UPLOAD_DATA_END_TIME = now;
-                                    if (handler != null) {
-                                        Message m = new Message();
-                                        m.obj = new OpenParam(currentOrder, params);
-                                        m.what = HANDLER_MESSAGE_WHAT_PARMA;
-                                        handler.sendMessage(m);
-                                    }
-                                    StringBuilder mess = new StringBuilder();
-                                    mess.append("整理数据时间:").append(OPEN_DISPOSAL_DATA_END_TIME - OPEN_DISPOSAL_DATA_START_TIME).append("ms\n");
-                                    ILog.d(TIME_TAG, mess.toString());
-                                } catch (Exception e) {
-                                    //参数提交异常，恢复为结束状态，需要用户重新扫码开门
-                                    transactionStatus = TRANSACTION_STATUS_RESULT;
-                                    ILog.d("提交开门数据异常:" + e.getMessage());
-                                    if (handler != null) {
-                                        Message m = new Message();
-                                        m.obj = "提交开门数据异常" + e.getMessage();
-                                        m.what = HANDLER_MESSAGE_WHAT_MESS;
-                                        handler.sendMessage(m);
-                                    }
-                                }
-                                ILog.d("提交开门数据结束!");
-                            } else {
-                                //当前状态异常，恢复为结束状态
-                                ILog.d("错误的订单状态,transactionStatus:" + transactionStatus);
-                                transactionStatus = TRANSACTION_STATUS_RESULT;
+                            boolean succ = setTransactionStatusOpendoor(params);
+                            if (!succ) {
+                                setTransactionStatusResult(currentOrder);
                             }
                         } else {
-                            //当前状态为已开门状态
-                            if (transactionStatus == TRANSACTION_STATUS_OPENDOOR) {
-                                now = new Date().getTime();
-                                CLOSE_DISPOSAL_DATA_END_TIME = now;
-                                try {
-                                    TimeConsts.CLOSE_UPLOAD_DATA_START_TIME = now;
-                                    ILog.d(TIME_TAG, now + "，开始提交关门数据");
-                                    boolean succ = RetailVisManager.closeDoor(currentOrder, params);
-                                    transactionStatus = succ ? TRANSACTION_STATUS_CLOSEDOOR : TRANSACTION_STATUS_RESULT;
-                                    ILog.d(TIME_TAG, new Date().getTime() + "，提交关门数据" + (succ ? "成功" : "失败") + "\ntransactionStatus 更新为 " + transactionStatus);
-                                    TimeConsts.CLOSE_UPLOAD_DATA_END_TIME = now;
-                                    if (handler != null) {
-                                        Message m = new Message();
-                                        m.obj = new CloseParam(params);
-                                        m.what = HANDLER_MESSAGE_WHAT_PARMA;
-                                        handler.sendMessage(m);
-                                    }
-                                } catch (Exception e) {
-                                    //参数提交异常，恢复为结束状态，数据未提交。
-                                    transactionStatus = TRANSACTION_STATUS_RESULT;
-                                    ILog.d("开始提交关门数据异常:" + e.getMessage());
-                                    if (handler != null) {
-                                        Message m = new Message();
-                                        m.obj = "提交开门数据异常" + e.getMessage();
-                                        m.what = HANDLER_MESSAGE_WHAT_MESS;
-                                        handler.sendMessage(m);
-                                    }
-                                }
-                                ILog.d("提交关门数据结束!");
-                                StringBuilder mess = new StringBuilder();
-                                mess.append("整理数据时间:").append(CLOSE_DISPOSAL_DATA_END_TIME - CLOSE_DISPOSAL_DATA_START_TIME).append("ms\n");
-                                ILog.d(TIME_TAG, mess.toString());
-                            } else {
-                                ILog.d("错误的订单状态,transactionStatus:" + transactionStatus);
-                                transactionStatus = TRANSACTION_STATUS_RESULT;
+                            boolean succ = setTransactionStatusClosedoor(params);
+                            if (!succ) {
+                                setTransactionStatusResult(currentOrder);
                             }
                         }
                     } else {
                         ILog.d("无有效参数，订单结束");
-                        transactionStatus = TRANSACTION_STATUS_RESULT;
+                        setTransactionStatusResult(currentOrder);
                     }
                 }
             }
@@ -404,18 +344,103 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     }
 
 
-    private List<Float> getTestWeight(boolean isOpenDoor, int floor) {
-        List<Float> weights = new ArrayList<>();
-        if (isOpenDoor) {
-            weights.add(1000.0f);
-            weights.add(2000.0f);
-            weights.add(3000.0f);
+    public boolean setTransactionStatusInited() {
+        if (this.transactionStatus == TRANSACTION_STATUS_RESULT) {
+            this.transactionStatus = TRANSACTION_STATUS_INITED;
+            this.currentOrder = OsModule.get().getSn() + "-" + System.currentTimeMillis();
+            return true;
         } else {
-            weights.add(1000.0f);
-            weights.add(2000.0f);
-            weights.add(2500.0f);
+            ILog.d(TAG, "当前订单状态" + this.transactionStatus + "未完成，不允许重置");
+            return false;
         }
-        return weights;
+    }
+
+    public boolean setTransactionStatusOpendoor(List<RetailInputParam> params) {
+        //当前状态为已初始化状态
+        if (transactionStatus == TRANSACTION_STATUS_INITED) {
+            boolean succ;
+            long now = new Date().getTime();
+            OPEN_DISPOSAL_DATA_END_TIME = now;
+            //参数获取完整后，才开门
+            OsModule.get().unlock();
+            now = new Date().getTime();
+            TimeConsts.OPEN_UPLOAD_DATA_START_TIME = now;
+            ILog.d(TIME_TAG, now + ",开始提交开门数据");
+            succ = RetailVisManager.openDoor(currentOrder, params);
+            if (succ) {
+                this.transactionStatus = TRANSACTION_STATUS_OPENDOOR;
+            }
+            now = new Date().getTime();
+            ILog.d(TIME_TAG, now + "提交开门数据" + (succ ? "成功" : "失败") + "\n，transactionStatus 更新为 " + transactionStatus);
+            TimeConsts.OPEN_UPLOAD_DATA_END_TIME = now;
+            if (messHandler != null) {
+                Message m = new Message();
+                m.obj = new OpenParam(currentOrder, params);
+                m.what = HANDLER_MESSAGE_WHAT_PARMA;
+                messHandler.sendMessage(m);
+            }
+            StringBuilder mess = new StringBuilder();
+            mess.append("整理数据时间:").append(OPEN_DISPOSAL_DATA_END_TIME - OPEN_DISPOSAL_DATA_START_TIME).append("ms\n");
+            ILog.d(TIME_TAG, mess.toString());
+            ILog.d("提交开门数据结束!");
+            return succ;
+        } else {
+            //当前状态异常，恢复为结束状态
+            ILog.d("错误的订单状态,transactionStatus:" + transactionStatus);
+            return false;
+        }
+    }
+
+    public boolean setTransactionStatusClosedoor(List<RetailInputParam> params) {
+        //当前状态为已开门状态
+        if (transactionStatus == TRANSACTION_STATUS_OPENDOOR) {
+            boolean succ;
+            long now = new Date().getTime();
+            CLOSE_DISPOSAL_DATA_END_TIME = now;
+            TimeConsts.CLOSE_UPLOAD_DATA_START_TIME = now;
+            ILog.d(TIME_TAG, now + "，开始提交关门数据");
+            succ = RetailVisManager.closeDoor(currentOrder, params);
+            if (succ) {
+                this.transactionStatus = TRANSACTION_STATUS_CLOSEDOOR;
+                //两分钟等待超时
+                this.timeOutHandler.postDelayed(this.timeOutRunnable, 120 * 1000);
+            }
+            ILog.d(TIME_TAG, new Date().getTime() + "，提交关门数据" + (succ ? "成功" : "失败") + "\ntransactionStatus 更新为 " + transactionStatus);
+            TimeConsts.CLOSE_UPLOAD_DATA_END_TIME = now;
+            if (messHandler != null) {
+                Message m = new Message();
+                m.obj = new CloseParam(params);
+                m.what = HANDLER_MESSAGE_WHAT_PARMA;
+                messHandler.sendMessage(m);
+            }
+            ILog.d("提交关门数据结束!");
+            StringBuilder mess = new StringBuilder();
+            mess.append("整理数据时间:").append(CLOSE_DISPOSAL_DATA_END_TIME - CLOSE_DISPOSAL_DATA_START_TIME).append("ms\n");
+            ILog.d(TIME_TAG, mess.toString());
+            return succ;
+        } else {
+            ILog.d("错误的订单状态,transactionStatus:" + transactionStatus);
+            return false;
+        }
+    }
+
+    public boolean setTransactionStatusResult(String order) {
+        if (order.equals(this.currentOrder)) {
+            this.transactionStatus = TRANSACTION_STATUS_RESULT;
+            this.currentOrder = "";
+            this.timeOutHandler.removeCallbacks(this.timeOutRunnable);
+            return true;
+        } else {
+            ILog.d(TAG, "返回的订单号" + order + "与当前订单" + this.currentOrder + "不符");
+            return false;
+        }
+    }
+
+    public boolean setTransactionStatusTimeOut() {
+        ILog.d(TIME_TAG, "当前订单" + currentOrder + "结果返回超时，重置状态");
+        this.transactionStatus = TRANSACTION_STATUS_RESULT;
+        this.currentOrder = "";
+        return true;
     }
 
     /**
@@ -489,4 +514,5 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
             manager.close();
         }
     }
+
 }
