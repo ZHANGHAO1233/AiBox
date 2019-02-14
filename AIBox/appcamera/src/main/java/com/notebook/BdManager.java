@@ -22,6 +22,8 @@ import com.mgr.serial.comn.util.GsonUtil;
 import com.thefunc.serialportlibrary.SerialPortFinder;
 import com.utils.DownloadUtil;
 
+import org.json.JSONArray;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,7 +80,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         this.timeOutRunnable = new Runnable() {
             @Override
             public void run() {
-                setTransactionStatusTimeOut();
+                setTransactionStatusError("订单结果返回超时");
             }
         };
     }
@@ -326,17 +328,17 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
                         if (isOpenDoor) {
                             boolean succ = setTransactionStatusOpendoor(params);
                             if (!succ) {
-                                setTransactionStatusResult(currentOrder);
+                                setTransactionStatusError("开门数据提交失败");
                             }
                         } else {
                             boolean succ = setTransactionStatusClosedoor(params);
                             if (!succ) {
-                                setTransactionStatusResult(currentOrder);
+                                setTransactionStatusError("关门数据提交失败");
                             }
                         }
                     } else {
                         ILog.d("无有效参数，订单结束");
-                        setTransactionStatusResult(currentOrder);
+                        setTransactionStatusError("无有效参数，订单结束");
                     }
                 }
             }
@@ -424,11 +426,14 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         }
     }
 
-    public boolean setTransactionStatusResult(String order) {
+    public boolean setTransactionStatusResult(String order, JSONArray products) {
         if (order.equals(this.currentOrder)) {
             this.transactionStatus = TRANSACTION_STATUS_RESULT;
             this.currentOrder = "";
             this.timeOutHandler.removeCallbacks(this.timeOutRunnable);
+            if (products != null) {
+                OsModule.get().sendRecognizeResult(products);
+            }
             return true;
         } else {
             ILog.d(TAG, "返回的订单号" + order + "与当前订单" + this.currentOrder + "不符");
@@ -436,8 +441,8 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         }
     }
 
-    public boolean setTransactionStatusTimeOut() {
-        ILog.d(TIME_TAG, "当前订单" + currentOrder + "结果返回超时，重置状态");
+    public boolean setTransactionStatusError(String mess) {
+        ILog.d(TIME_TAG, "当前订单" + currentOrder + "," + mess + ",重置状态");
         this.transactionStatus = TRANSACTION_STATUS_RESULT;
         this.currentOrder = "";
         return true;

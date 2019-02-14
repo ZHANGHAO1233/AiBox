@@ -40,7 +40,7 @@ public class BdCallback implements IRetailCallBack {
             mess += products;
         }
         ILog.d(TIME_TAG, mess);
-        if (BdManager.getBd().setTransactionStatusResult(order)) {
+        if (BdManager.getBd().setTransactionStatusResult(order,products)) {
             if (this.handler != null) {
                 Message message = new Message();
                 message.what = HandleConsts.HANDLER_MESSAGE_WHAT_ORDER;
@@ -56,9 +56,6 @@ public class BdCallback implements IRetailCallBack {
             ILog.d(TIME_TAG, "调用关门到返回的时间：time:" + (BaiduGlobalVar.endNetTime - BaiduGlobalVar.endSDKTime));
             String detail = TimeConsts.write();
             ILog.d(TIME_TAG, detail);
-            if(products!=null){
-                OsModule.get().sendRecognizeResult(products);
-            }
         }
     }
 
