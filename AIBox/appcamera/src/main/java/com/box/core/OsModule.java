@@ -6,6 +6,7 @@ import android.os.Message;
 
 import com.box.utils.ILog;
 import com.idata.iot.sdk.api.IDataApi;
+import com.lib.sdk.bean.StringUtils;
 import com.notebook.BdManager;
 
 import org.json.JSONArray;
@@ -28,6 +29,7 @@ import static com.consts.HandleConsts.HANDLER_MESSAGE_WHAT_INITED;
 public class OsModule {
     private static final String TAG = "OsModule";
     private static OsModule osOperator;
+    private String sn;
     private ServerModule server;
     private Handler handler;
     private Integer wxUserId;
@@ -55,7 +57,10 @@ public class OsModule {
     }
 
     public String getSn() {
-        return IDataApi.System.getDeviceSn();
+        if (StringUtils.isStringNULL(sn)) {
+            this.sn = IDataApi.System.getDeviceSn();
+        }
+        return this.sn;
 //        return "1688619";
     }
 
@@ -78,7 +83,7 @@ public class OsModule {
         }
         //落锁
         ILog.d(TIME_TAG, new Date().getTime() + ",接收到开锁指令");
-        if (BdManager.getBd().setTransactionStatusInited()) {
+        if (BdManager.getBd().setTransactionStatusInited(wxUserId)) {
             this.wxUserId = wxUserId;
             //取照片
             ILog.d(TAG, "--captureImageBeforeunlock  door before,get the picture:");
@@ -156,14 +161,15 @@ public class OsModule {
         sendMsg(json);
     }
 
-    public void sendRecognizeResult(JSONArray data) {//需要加入重试机制
+    public void sendRecognizeResult(String order, Integer wxUserId, JSONArray data) {//需要加入重试机制
         Map<String, Object> map = new HashMap<>();
         map.put("sid", UUID.randomUUID().toString());
         map.put("cmd", "CommodityStatus");
         map.put("data", data);
-        if (this.wxUserId != null) {
-            map.put("wxUserId", this.wxUserId);
+        if (wxUserId != null) {
+            map.put("wxUserId", wxUserId);
         }
+        map.put("order", order);
         String json = new JSONObject(map).toString();
         ILog.d(TAG, "send result 2 server,result:" + json);
         sendMsg(json);

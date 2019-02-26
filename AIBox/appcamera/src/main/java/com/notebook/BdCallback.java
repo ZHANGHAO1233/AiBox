@@ -6,7 +6,6 @@ import android.os.Message;
 import com.baidu.retail.BaiduGlobalVar;
 import com.baidu.retail.IRetailCallBack;
 import com.bean.Order;
-import com.box.core.OsModule;
 import com.box.utils.ILog;
 import com.consts.HandleConsts;
 import com.consts.TimeConsts;
@@ -17,7 +16,6 @@ import java.util.Date;
 import java.util.List;
 
 import static com.box.utils.ILog.TIME_TAG;
-import static com.notebook.BdManager.TRANSACTION_STATUS_RESULT;
 
 /**
  * Created by Curry on 2018/10/12.
@@ -40,7 +38,13 @@ public class BdCallback implements IRetailCallBack {
             mess += products;
         }
         ILog.d(TIME_TAG, mess);
-        if (BdManager.getBd().setTransactionStatusResult(order,products)) {
+        String[] params = order.split("--");
+        String orderno = params[0];
+        Integer wxUserId = null;
+        if (params.length > 1) {
+            wxUserId = Integer.parseInt(params[1]);
+        }
+        if (BdManager.getBd().setOrderResult(orderno, wxUserId, products)) {
             if (this.handler != null) {
                 Message message = new Message();
                 message.what = HandleConsts.HANDLER_MESSAGE_WHAT_ORDER;
@@ -50,7 +54,6 @@ public class BdCallback implements IRetailCallBack {
                 this.handler.sendMessage(message);
             }
             TimeConsts.ORDER_END_TIME = now;
-            ILog.d(TIME_TAG, now + "，transactionStatus 更新为 " + TRANSACTION_STATUS_RESULT);
             ILog.d(TIME_TAG, "SDK上传前处理时间" + (BaiduGlobalVar.endSDKTime - BaiduGlobalVar.startSDKTime));
             ILog.d(TIME_TAG, "SDK网络返回后处理时间:" + (System.currentTimeMillis() - BaiduGlobalVar.startResponseTime));
             ILog.d(TIME_TAG, "调用关门到返回的时间：time:" + (BaiduGlobalVar.endNetTime - BaiduGlobalVar.endSDKTime));

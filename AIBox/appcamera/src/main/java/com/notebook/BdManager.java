@@ -59,8 +59,8 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     private static final int TRANSACTION_STATUS_INITED = 0;//订单初始化
     public static int TRANSACTION_STATUS_OPENDOOR = 1;//订单开门
     public static int TRANSACTION_STATUS_CLOSEDOOR = 2;//订单关门
-    public static int TRANSACTION_STATUS_RESULT = 3;//无订单状态
-    public int transactionStatus = TRANSACTION_STATUS_RESULT;
+    //    public static int TRANSACTION_STATUS_RESULT = 3;//无订单状态
+    public int transactionStatus = TRANSACTION_STATUS_CLOSEDOOR;
     private volatile String currentOrder = "";//规则，设备sn+时间戳
     public Map<String, Double> serialResults;
 
@@ -69,21 +69,10 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     private Map<String, List<String>> commandMap;
     private static final String BAUDRATE_DEFAULT_VALUE = "115200";
     private String currentImageDir;
-    private Handler timeOutHandler;
-    private Runnable timeOutRunnable;
 
     private BdManager() {
     }
 
-    private void initTimeOutHandler() {
-        this.timeOutHandler = new Handler();
-        this.timeOutRunnable = new Runnable() {
-            @Override
-            public void run() {
-                setTransactionStatusError("订单结果返回超时");
-            }
-        };
-    }
 
     private void initSerialCommands() {
         String command1 = "1 G \n";
@@ -152,7 +141,6 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         initBdConfig();
         initSerialCommands();
         openSerialPorts();
-        initTimeOutHandler();
     }
 
     private void createPath(String path) {
@@ -270,7 +258,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
             @Override
             public void run() {
                 Looper.prepare();
-                if (setTransactionStatusInited()) {
+                if (setTransactionStatusInited(0)) {
                     TimeConsts.OPEN_COLLECTION_START_TIME = new Date().getTime();
                     downloadImages(true);
                     serialResults = null;
@@ -304,6 +292,8 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
                     Looper.prepare();
                     long now = new Date().getTime();
                     ILog.d(TIME_TAG, now + ",开始整理" + (isOpenDoor ? "开门" : "关门") + "参数");
+//                    testImage(isOpenDoor);
+//                    testWeight(isOpenDoor);
                     if (isOpenDoor) {
                         TimeConsts.OPEN_COLLECTION_END_TIME = now;
                         TimeConsts.OPEN_DISPOSAL_DATA_START_TIME = now;
@@ -345,11 +335,72 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         }).start();
     }
 
+    /**
+     * 测试数据，在内存卡目录下自己放置文件
+     */
+    private void testImage(boolean isOpenDoor) {
+        paths.clear();
+        if (isOpenDoor) {
+            paths.put("0", ImageCacheManager.getInstance().getBase_image_path() + File.separator + "test" + File.separator + "0_open.jpg");
+            paths.put("1", ImageCacheManager.getInstance().getBase_image_path() + File.separator + "test" + File.separator + "1_open.jpg");
+            paths.put("2", ImageCacheManager.getInstance().getBase_image_path() + File.separator + "test" + File.separator + "2_open.jpg");
+            paths.put("3", ImageCacheManager.getInstance().getBase_image_path() + File.separator + "test" + File.separator + "3_open.jpg");
+        } else {
+            paths.put("0", ImageCacheManager.getInstance().getBase_image_path() + File.separator + "test" + File.separator + "0_close.jpg");
+            paths.put("1", ImageCacheManager.getInstance().getBase_image_path() + File.separator + "test" + File.separator + "1_close.jpg");
+            paths.put("2", ImageCacheManager.getInstance().getBase_image_path() + File.separator + "test" + File.separator + "2_close.jpg");
+            paths.put("3", ImageCacheManager.getInstance().getBase_image_path() + File.separator + "test" + File.separator + "3_close.jpg");
+        }
+    }
 
-    public boolean setTransactionStatusInited() {
-        if (this.transactionStatus == TRANSACTION_STATUS_RESULT) {
+    /**
+     * 测试数据
+     */
+    private void testWeight(boolean isOpenDoor) {
+        this.serialResults.clear();
+        if (isOpenDoor) {
+            this.serialResults.put("1 G \n", 2770.145);
+            this.serialResults.put("2 G \n", 2469.934);
+            this.serialResults.put("3 G \n", 1572.042);
+
+            this.serialResults.put("4 G \n", 5317.201);
+            this.serialResults.put("5 G \n", 5129.623);
+            this.serialResults.put("6 G \n", 5121.365);
+
+            this.serialResults.put("7 G \n", 4689.8);
+            this.serialResults.put("8 G \n", 5272.384);
+            this.serialResults.put("9 G \n", 5158.187);
+
+            this.serialResults.put("10 G \n", 3351.305);
+            this.serialResults.put("11 G \n", 2621.768);
+            this.serialResults.put("12 G \n", 3305.15);
+        } else {
+            this.serialResults.put("1 G \n", 2770.207);
+            this.serialResults.put("2 G \n", 2469.869);
+            this.serialResults.put("3 G \n", 1496.766);
+
+            this.serialResults.put("4 G \n", 4772.632);
+            this.serialResults.put("5 G \n", 5129.669);
+            this.serialResults.put("6 G \n", 4631.766);
+
+            this.serialResults.put("7 G \n", 4689.662);
+            this.serialResults.put("8 G \n", 5272.469);
+            this.serialResults.put("9 G \n", 4629.493);
+
+            this.serialResults.put("10 G \n", 2990.628);
+            this.serialResults.put("11 G \n", 2621.458);
+            this.serialResults.put("12 G \n", 3304.83);
+        }
+    }
+
+
+    public boolean setTransactionStatusInited(Integer wxUserId) {
+        if (this.transactionStatus == TRANSACTION_STATUS_CLOSEDOOR) {
             this.transactionStatus = TRANSACTION_STATUS_INITED;
             this.currentOrder = OsModule.get().getSn() + "-" + System.currentTimeMillis();
+            if (wxUserId != null) {
+                this.currentOrder += ("--" + wxUserId);
+            }
             return true;
         } else {
             ILog.d(TAG, "当前订单状态" + this.transactionStatus + "未完成，不允许重置");
@@ -404,8 +455,6 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
             succ = RetailVisManager.closeDoor(currentOrder, params);
             if (succ) {
                 this.transactionStatus = TRANSACTION_STATUS_CLOSEDOOR;
-                //两分钟等待超时
-                this.timeOutHandler.postDelayed(this.timeOutRunnable, 120 * 1000);
             }
             ILog.d(TIME_TAG, new Date().getTime() + "，提交关门数据" + (succ ? "成功" : "失败") + "\ntransactionStatus 更新为 " + transactionStatus);
             TimeConsts.CLOSE_UPLOAD_DATA_END_TIME = now;
@@ -426,25 +475,17 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         }
     }
 
-    public boolean setTransactionStatusResult(String order, JSONArray products) {
-        if (order.equals(this.currentOrder)) {
-            this.transactionStatus = TRANSACTION_STATUS_RESULT;
-            this.currentOrder = "";
-            this.timeOutHandler.removeCallbacks(this.timeOutRunnable);
-            if (products != null) {
-                OsModule.get().sendRecognizeResult(products);
-            }
-            return true;
-        } else {
-            ILog.d(TAG, "返回的订单号" + order + "与当前订单" + this.currentOrder + "不符");
-            return false;
-        }
-    }
-
     public boolean setTransactionStatusError(String mess) {
         ILog.d(TIME_TAG, "当前订单" + currentOrder + "," + mess + ",重置状态");
-        this.transactionStatus = TRANSACTION_STATUS_RESULT;
+        this.transactionStatus = TRANSACTION_STATUS_CLOSEDOOR;
         this.currentOrder = "";
+        return true;
+    }
+
+    public boolean setOrderResult(String orderno, Integer wxUserId, JSONArray products) {
+        if (products != null) {
+            OsModule.get().sendRecognizeResult(orderno, wxUserId, products);
+        }
         return true;
     }
 
@@ -495,23 +536,6 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         return resultMap;
     }
 
-    private int getCameraNum(String path) {
-        int num = 0;
-        if (!TextUtils.isEmpty(path)) {
-            int lastFileSeperatorIndex = path.lastIndexOf(File.separator) + 1;
-            int index = path.indexOf(linkChar);
-            if (index > -1 && lastFileSeperatorIndex > -1) {
-                try {
-                    ILog.d(TAG, "string num:" + path.substring(lastFileSeperatorIndex, index));
-                    num = Integer.valueOf(path.substring(lastFileSeperatorIndex, index));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        ILog.d("camera num:" + num);
-        return num;
-    }
 
     public void closeAllSerials() {
         for (String key : this.serials.keySet()) {
