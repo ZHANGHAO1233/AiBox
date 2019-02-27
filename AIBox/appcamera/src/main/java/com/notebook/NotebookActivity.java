@@ -1,10 +1,12 @@
 package com.notebook;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,6 +34,7 @@ public class NotebookActivity extends android.app.Activity implements View.OnCli
     private ListView lv_open_params;
     private ListView lv_close_params;
     private ListView lv_time_log;
+    private Button btn_setting;
     private BdManager nh;
     public RequestParamsHandler handler = new RequestParamsHandler();
     private List<String> logs;
@@ -59,6 +62,8 @@ public class NotebookActivity extends android.app.Activity implements View.OnCli
         this.lv_open_params = (ListView) findViewById(R.id.lv_open_params);
         this.lv_close_params = (ListView) findViewById(R.id.lv_close_params);
         this.lv_time_log = (ListView) findViewById(R.id.lv_time_log);
+        this.btn_setting = (Button) findViewById(R.id.btn_setting);
+        this.btn_setting.setOnClickListener(this);
         findViewById(R.id.download1).setOnClickListener(this);
         findViewById(R.id.download2).setOnClickListener(this);
         findViewById(R.id.order_succ).setOnClickListener(this);
@@ -106,6 +111,11 @@ public class NotebookActivity extends android.app.Activity implements View.OnCli
                     }
                     order = null;
                 }
+                break;
+            case R.id.btn_setting:
+                Intent intent = new Intent();
+                intent.setClass(this, SettingActivity.class);
+                this.startActivity(intent);
                 break;
         }
     }

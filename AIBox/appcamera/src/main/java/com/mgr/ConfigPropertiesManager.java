@@ -76,7 +76,6 @@ public class ConfigPropertiesManager {
     private void initProperties() {
         try {
             String base_path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "AiBox" + File.separator + "conf";
-            ;
             String path = base_path + File.separator + SETTING_CONFIG_NAME;
             this.properties = new Properties();
             InputStream in = new BufferedInputStream(new FileInputStream(path));

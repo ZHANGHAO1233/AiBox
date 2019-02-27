@@ -15,6 +15,7 @@ import com.box.utils.ILog;
 import com.box.utils.TimeUtil;
 import com.consts.TimeConsts;
 import com.lib.sdk.bean.StringUtils;
+import com.mgr.ConfigPropertiesManager;
 import com.mgr.ImageCacheManager;
 import com.mgr.serial.comn.Device;
 import com.mgr.serial.comn.SerialPortManager;
@@ -34,6 +35,10 @@ import java.util.List;
 import java.util.Map;
 
 import static com.box.utils.ILog.TIME_TAG;
+import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_HOST;
+import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_HOST_DEFAULT_VALUE;
+import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_PORT;
+import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_PORT_DEFAULT_VALUE;
 import static com.consts.HandleConsts.HANDLER_MESSAGE_WHAT_PARMA;
 import static com.consts.TimeConsts.CLOSE_DISPOSAL_DATA_END_TIME;
 import static com.consts.TimeConsts.CLOSE_DISPOSAL_DATA_START_TIME;
@@ -47,13 +52,11 @@ import static com.consts.TimeConsts.OPEN_DISPOSAL_DATA_START_TIME;
 public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.OnDownloadListener {
     private static final String TAG = "BdManager";
     private static BdManager bd;
-    private final String ipAndPort = "192.168.1.186:8080";
-    private final String http = "http://";
-    private String urls[] = new String[]{http + ipAndPort + "/cap_0.jpg", http + ipAndPort + "/cap_1.jpg", http + ipAndPort + "/cap_2.jpg", http + ipAndPort + "/cap_3.jpg"};
+    private String urls[];
     //    private String urls[] = new String[]{"https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png"};
     //    public String urls[] = new String[]{"http://192.168.1.185:8080/cap_0.jpg", "http://192.168.1.185:8080/cap_1.jpg", "http://192.168.1.185:8080/cap_2.jpg", "http://192.168.1.185:8080/cap_3.jpg"};
     private Map<String, String> paths = new HashMap<>();
-    private volatile int finishNum = urls.length;
+    private volatile int finishNum;
     private boolean hasDownLoadFinish = true;
     private Handler messHandler;
     private static final int TRANSACTION_STATUS_INITED = 0;//订单初始化
@@ -143,6 +146,17 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         openSerialPorts();
     }
 
+    private void initHost() {
+        String host = ConfigPropertiesManager.getInstance().getConfigProperty(SETTING_CONFIG_PROPERTY_HOST,
+                SETTING_CONFIG_PROPERTY_HOST_DEFAULT_VALUE);
+        String port = ConfigPropertiesManager.getInstance().getConfigProperty(SETTING_CONFIG_PROPERTY_PORT,
+                SETTING_CONFIG_PROPERTY_PORT_DEFAULT_VALUE);
+        String path = host + ":" + port;
+        ILog.d(TAG, "获取到path：" + path);
+        this.urls = new String[]{path + "/cap_0.jpg", path + "/cap_1.jpg", path + "/cap_2.jpg", path + "/cap_3.jpg"};
+        this.finishNum = this.urls.length;
+    }
+
     private void createPath(String path) {
         if (!TextUtils.isEmpty(path)) {
             File f = new File(path);
@@ -198,6 +212,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     }
 
     public synchronized void downloadImages(boolean isOpenDoor) {
+        this.initHost();
         long now = new Date().getTime();
         if (isOpenDoor) {
             TimeConsts.OPEN_DOWNLOAD_IMAGES_START_TIME = now;
