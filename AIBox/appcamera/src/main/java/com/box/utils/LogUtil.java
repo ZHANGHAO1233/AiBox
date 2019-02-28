@@ -25,6 +25,7 @@ public class LogUtil {//日志管理工具�?
     private static String logName = "";//日志文件名称
     private static final String FILE_END_PREFIX = ".txt";//日志命名后缀
     private static final int logSaveDays = 3;
+    private static String base_log_path;
 
 
     public static void init() {
@@ -121,13 +122,17 @@ public class LogUtil {//日志管理工具�?
      * @return
      */
     private static String getFilePath() {
-        String path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "AILogs";
-        File file = new File(path);
-        ILog.d("path:" + path + ":exists:" + file.exists());
+        base_log_path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "AiBox" + File.separator + "AILogs";
+        File file = new File(base_log_path);
+        ILog.d("path:" + base_log_path + ":exists:" + file.exists());
         if (!file.exists()) {
             file.mkdir();
         }
         return file.getAbsolutePath();
+    }
+
+    public static String getBase_log_path() {
+        return base_log_path == null ? "" : base_log_path;
     }
 
     /**

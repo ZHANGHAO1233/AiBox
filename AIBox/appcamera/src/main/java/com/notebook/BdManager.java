@@ -53,8 +53,6 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     private static final String TAG = "BdManager";
     private static BdManager bd;
     private String urls[];
-    //    private String urls[] = new String[]{"https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png"};
-    //    public String urls[] = new String[]{"http://192.168.1.185:8080/cap_0.jpg", "http://192.168.1.185:8080/cap_1.jpg", "http://192.168.1.185:8080/cap_2.jpg", "http://192.168.1.185:8080/cap_3.jpg"};
     private Map<String, String> paths = new HashMap<>();
     private volatile int finishNum;
     private boolean hasDownLoadFinish = true;
@@ -154,6 +152,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         String path = host + ":" + port;
         ILog.d(TAG, "获取到path：" + path);
         this.urls = new String[]{path + "/cap_0.jpg", path + "/cap_1.jpg", path + "/cap_2.jpg", path + "/cap_3.jpg"};
+//        this.urls = new String[]{"https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png", "https://www.baidu.com/img/bd_logo1.png"};
         this.finishNum = this.urls.length;
     }
 

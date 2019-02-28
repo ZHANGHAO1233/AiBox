@@ -23,18 +23,23 @@ public class ImageCacheManager {
     private String base_image_path;
 
     private ImageCacheManager() {
-        this.base_image_path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "AiImages";
-        File f = new File(base_image_path);
-        if (!f.exists()) {
-            f.mkdirs();
-        }
+
     }
+
 
     public static ImageCacheManager getInstance() {
         if (sFaceCacheManager == null) {
             sFaceCacheManager = new ImageCacheManager();
         }
         return sFaceCacheManager;
+    }
+
+    public void init() {
+        this.base_image_path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "AiBox" + File.separator + "AiImages";
+        File f = new File(base_image_path);
+        if (!f.exists()) {
+            f.mkdirs();
+        }
     }
 
     public String getBase_image_path() {
@@ -84,7 +89,7 @@ public class ImageCacheManager {
         File dirFile = new File(dir);
         // 如果dir对应的文件不存在，或者不是一个目录，则退出
         if ((!dirFile.exists()) || (!dirFile.isDirectory())) {
-            ILog.d(TAG,"删除目录失败：" + dir + "不存在！");
+            ILog.d(TAG, "删除目录失败：" + dir + "不存在！");
             return false;
         }
         boolean flag = true;
@@ -105,12 +110,12 @@ public class ImageCacheManager {
             }
         }
         if (!flag) {
-            ILog.d(TAG,"删除目录失败！");
+            ILog.d(TAG, "删除目录失败！");
             return false;
         }
         // 删除当前目录
         if (dirFile.delete()) {
-            ILog.d(TAG,"删除目录" + dir + "成功！");
+            ILog.d(TAG, "删除目录" + dir + "成功！");
             return true;
         } else {
             return false;

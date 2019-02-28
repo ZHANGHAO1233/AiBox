@@ -15,8 +15,6 @@ import com.lib.funsdk.support.FunSupport;
 import com.mgr.ConfigPropertiesManager;
 import com.mgr.ImageCacheManager;
 import com.mgr.UncaughtExceptionManager;
-import com.mgr.serial.comn.SerialPortsManager;
-import com.notebook.BdManager;
 
 
 public class MyApplication extends Application {
@@ -32,6 +30,7 @@ public class MyApplication extends Application {
         super.onCreate();
         context = this;
         LogUtil.init();
+        ImageCacheManager.getInstance().init();
         ImageCacheManager.getInstance().startImageCacheCleaning();
         NetworkUtil.init(this);
         CrashHandler.getInstance().init(this);

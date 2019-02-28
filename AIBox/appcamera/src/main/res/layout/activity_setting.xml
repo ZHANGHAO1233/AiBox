@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:padding="10dp"
     tools:context="com.notebook.SettingActivity">
 
@@ -51,4 +52,13 @@
             android:padding="5dp"
             android:text=" 确定 " />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/tv_clean_cache"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="10dp"
+        android:text="清除缓存"
+        android:textColor="@color/blue_like" />
 </LinearLayout>
