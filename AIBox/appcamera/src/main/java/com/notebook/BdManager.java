@@ -1,6 +1,7 @@
 package com.notebook;
 
 import android.app.Activity;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -10,6 +11,7 @@ import com.baidu.retail.RetailInputParam;
 import com.baidu.retail.RetailVisManager;
 import com.bean.CloseParam;
 import com.bean.OpenParam;
+import com.bean.Order;
 import com.box.core.OsModule;
 import com.box.utils.ILog;
 import com.box.utils.TimeUtil;
@@ -70,6 +72,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     private Map<String, List<String>> commandMap;
     private static final String BAUDRATE_DEFAULT_VALUE = "115200";
     private String currentImageDir;
+    private Map<String, Order> orderMap;
 
     private BdManager() {
     }
@@ -142,6 +145,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         initBdConfig();
         initSerialCommands();
         openSerialPorts();
+        this.orderMap = new HashMap<>();
     }
 
     private void initHost() {
@@ -192,6 +196,8 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         RetailVisManager.setSK("K1GhMzLG6YAWY3oDSWCjTWIiKo7SjDSP");
         RetailVisManager.setAK("W7SFpfC5o7tS3d4CQugZ8YEglb9QVEzN");
         RetailVisManager.setBoxid(OsModule.get().getSn());
+        RetailVisManager.setupCachePath(Environment.getExternalStorageDirectory().getAbsolutePath()
+                + File.separator + "aa_retail");
     }
 
 
@@ -273,6 +279,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
             public void run() {
                 Looper.prepare();
                 if (setTransactionStatusInited(0)) {
+                    OsModule.get().sendLockStatus2Server(true);
                     TimeConsts.OPEN_COLLECTION_START_TIME = new Date().getTime();
                     downloadImages(true);
                     serialResults = null;
@@ -287,6 +294,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
             @Override
             public void run() {
                 Looper.prepare();
+                OsModule.get().sendLockStatus2Server(false);
                 TimeConsts.CLOSE_COLLECTION_START_TIME = new Date().getTime();
                 downloadImages(false);
                 serialResults = null;
@@ -412,9 +420,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         if (this.transactionStatus == TRANSACTION_STATUS_CLOSEDOOR) {
             this.transactionStatus = TRANSACTION_STATUS_INITED;
             this.currentOrder = OsModule.get().getSn() + "-" + System.currentTimeMillis();
-            if (wxUserId != null) {
-                this.currentOrder += ("--" + wxUserId);
-            }
+            this.orderMap.put(this.currentOrder, new Order(this.currentOrder, wxUserId));
             return true;
         } else {
             ILog.d(TAG, "当前订单状态" + this.transactionStatus + "未完成，不允许重置");
@@ -496,11 +502,26 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         return true;
     }
 
-    public boolean setOrderResult(String orderno, Integer wxUserId, JSONArray products) {
-        if (products != null) {
-            OsModule.get().sendRecognizeResult(orderno, wxUserId, products);
+    public Order setOrderResult(String orderno, JSONArray products, Exception e) {
+        Order order = this.orderMap.get(orderno);
+        if (order != null) {
+            if (e != null) {
+                order.setMess(e.getMessage());
+            } else if (products != null) {
+                order.setProducts(products);
+                OsModule.get().sendRecognizeResult(orderno, order.getWxId(), products);
+            }
+            this.orderMap.remove(order);
+            return order;
         }
-        return true;
+        return null;
+    }
+
+    /**
+     * 上传手动验证的订单结果
+     */
+    public void updateOrderResult(boolean succ, Order order) {
+        RetailVisManager.recordOrderResult(order.getOrder(), succ, order.getProducts());
     }
 
     /**

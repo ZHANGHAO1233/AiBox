@@ -38,7 +38,7 @@ public abstract class DialogInputPasswd {
 			int cancelRes) {
 		this.context = context;
 		
-		tip = new android.app.AlertDialog.Builder(context).create();
+		tip = new AlertDialog.Builder(context).create();
 		tip.requestWindowFeature(Window.FEATURE_NO_TITLE);
 		tip.setCanceledOnTouchOutside(true);
 		tip.show();

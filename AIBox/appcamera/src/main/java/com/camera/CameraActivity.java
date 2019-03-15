@@ -1124,8 +1124,8 @@ public class CameraActivity extends ActivityDemo implements OnClickListener, OnF
         int m = UIFactory.dip2px(this, 5);
         int p = UIFactory.dip2px(this, 3);
         TextView textView = new TextView(this);
-        LinearLayout.LayoutParams layoutParamsT = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams layoutParamsT = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+                LayoutParams.WRAP_CONTENT);
         layoutParamsT.setMargins(m, m, m, m);
         textView.setLayoutParams(layoutParamsT);
         textView.setText(R.string.device_opt_channel);

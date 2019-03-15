@@ -2,16 +2,19 @@ package com.notebook;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.MainActivity;
+import com.bean.Tuple2;
 import com.box.utils.LogUtil;
 import com.idata.aibox.R;
 import com.lib.sdk.bean.StringUtils;
@@ -35,6 +38,7 @@ public class SettingActivity extends Activity implements View.OnClickListener {
     private Button btn_host_reset;
     private Button btn_host_confirm;
     private TextView tv_clean_cache;
+    private ListView lv_cameras_setting;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +49,7 @@ public class SettingActivity extends Activity implements View.OnClickListener {
         this.btn_host_reset = (Button) findViewById(R.id.btn_host_reset);
         this.btn_host_confirm = (Button) findViewById(R.id.btn_host_confirm);
         this.tv_clean_cache = (TextView) findViewById(R.id.tv_clean_cache);
+        this.lv_cameras_setting = (ListView) findViewById(R.id.lv_cameras_setting);
         this.btn_host_reset.setOnClickListener(this);
         this.btn_host_confirm.setOnClickListener(this);
         this.tv_clean_cache.setOnClickListener(this);
@@ -58,6 +63,11 @@ public class SettingActivity extends Activity implements View.OnClickListener {
                 SETTING_CONFIG_PROPERTY_PORT_DEFAULT_VALUE);
         this.et_host.setText(host);
         this.et_host_port.setText(port);
+        this.initCamera();
+    }
+
+    private void initCamera() {
+        List<Tuple2<Integer, UsbDevice>> usbs = new ArrayList<>();
     }
 
     @Override

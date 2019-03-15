@@ -161,7 +161,8 @@ public class OsModule {
         sendMsg(json);
     }
 
-    public void sendRecognizeResult(String order, Integer wxUserId, JSONArray data) {//需要加入重试机制
+    public void sendRecognizeResult(String order, Integer wxUserId, JSONArray data) {
+        //需要加入重试机制
         Map<String, Object> map = new HashMap<>();
         map.put("sid", UUID.randomUUID().toString());
         map.put("cmd", "CommodityStatus");

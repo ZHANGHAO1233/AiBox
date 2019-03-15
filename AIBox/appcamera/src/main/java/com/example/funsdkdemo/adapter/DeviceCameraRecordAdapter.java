@@ -60,7 +60,7 @@ public class DeviceCameraRecordAdapter extends BaseAdapter {
         if (null == convertView) {
             convertView = mInflater.inflate(
                     R.layout.item_device_camera_record, parent, false);
-            viewHolder = new DeviceCameraRecordAdapter.ViewHolder();
+            viewHolder = new ViewHolder();
             viewHolder.ivRecordShot = (ImageView) convertView.findViewById(R.id.iv_record_shot);
             viewHolder.tvRecordTime = (TextView) convertView.findViewById(R.id.tv_record_time);
             convertView.setTag(viewHolder);

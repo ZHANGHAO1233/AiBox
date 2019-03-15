@@ -94,6 +94,7 @@ public class NotebookActivity extends android.app.Activity implements View.OnCli
                 if (order != null) {
                     try {
                         OrderFileManager.getInstance().writeOrder(true, order);
+                        BdManager.getBd().updateOrderResult(true, order);
                         Toast.makeText(this, "订单" + order.getOrder() + "写入成功", Toast.LENGTH_LONG).show();
                     } catch (Exception e) {
                         Toast.makeText(this, "订单" + order.getOrder() + "写入失败" + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -105,6 +106,7 @@ public class NotebookActivity extends android.app.Activity implements View.OnCli
                 if (order != null) {
                     try {
                         OrderFileManager.getInstance().writeOrder(false, order);
+                        BdManager.getBd().updateOrderResult(false, order);
                         Toast.makeText(this, "订单" + order.getOrder() + "写入成功", Toast.LENGTH_LONG).show();
                     } catch (Exception e) {
                         Toast.makeText(this, "订单" + order.getOrder() + "写入失败" + e.getMessage(), Toast.LENGTH_LONG).show();

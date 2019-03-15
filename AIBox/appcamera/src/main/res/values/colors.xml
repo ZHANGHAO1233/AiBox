@@ -38,7 +38,7 @@
     <color name="record_key_color">#00bfa5</color>
     <color name="record_manual">#f5a22b</color>
     <!-- 灰色 -->
-    <color name="grey">#808080</color>
+    <color name="gray">#808080</color>
     <color name="text_color">#3b96f1</color>
     <color name="input_line_color">#5da0e4</color>
     <color name="little_grey">#cccccc</color>
@@ -46,5 +46,5 @@
     <color name="title_blue">#59aef5</color>
 
     <color name="theme">#2c8dfa</color>
-    
+
 </resources>

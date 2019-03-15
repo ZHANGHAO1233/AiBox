@@ -37,8 +37,10 @@ public class OrderFileManager {
         String path = createOrderDir(order);
         File saveFile = new File(path, succ ? "ok.txt" : "error.txt");
         FileOutputStream outStream = new FileOutputStream(saveFile);
-        outStream.write(order.getProducts().getBytes());
-        outStream.write(order.getMess().getBytes());
+        if (order.getProducts() != null)
+            outStream.write(order.getProducts().toString().getBytes());
+        if (order.getMess() != null)
+            outStream.write(order.getMess().getBytes());
         outStream.close();
     }
 

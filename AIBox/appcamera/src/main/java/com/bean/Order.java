@@ -1,18 +1,20 @@
 package com.bean;
 
+import org.json.JSONArray;
+
 /**
  * @author zhangh
  * @version 1.0.1
  */
 public class Order {
     private String order;
-    private String products;
+    private Integer wxId;
+    private JSONArray products;
     private String mess;
 
-    public Order(String order, String products, String mess) {
+    public Order(String order, Integer wxUserId) {
         this.order = order;
-        this.products = products;
-        this.mess = mess;
+        this.wxId = wxUserId;
     }
 
     public String getOrder() {
@@ -23,11 +25,11 @@ public class Order {
         this.order = order;
     }
 
-    public String getProducts() {
-        return products == null ? "" : products;
+    public JSONArray getProducts() {
+        return products;
     }
 
-    public void setProducts(String products) {
+    public void setProducts(JSONArray products) {
         this.products = products;
     }
 
@@ -37,5 +39,13 @@ public class Order {
 
     public void setMess(String mess) {
         this.mess = mess;
+    }
+
+    public Integer getWxId() {
+        return wxId;
+    }
+
+    public void setWxId(Integer wxId) {
+        this.wxId = wxId;
     }
 }

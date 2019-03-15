@@ -28,9 +28,9 @@ public class BdCallback implements IRetailCallBack {
     }
 
     @Override
-    public void callbackOrder(String order, Exception e, JSONArray products) {
+    public void callbackOrder(String orderno, Exception e, JSONArray products) {
         long now = new Date().getTime();
-        String mess = now + "，订单返回结果:" + order + ",";
+        String mess = now + "，订单返回结果:" + orderno + ",";
         if (e != null) {
             mess += e.getMessage() + ",";
         }
@@ -38,19 +38,12 @@ public class BdCallback implements IRetailCallBack {
             mess += products;
         }
         ILog.d(TIME_TAG, mess);
-        String[] params = order.split("--");
-        String orderno = params[0];
-        Integer wxUserId = null;
-        if (params.length > 1) {
-            wxUserId = Integer.parseInt(params[1]);
-        }
-        if (BdManager.getBd().setOrderResult(orderno, wxUserId, products)) {
+        Order order = BdManager.getBd().setOrderResult(orderno, products, e);
+        if (order != null) {
             if (this.handler != null) {
                 Message message = new Message();
                 message.what = HandleConsts.HANDLER_MESSAGE_WHAT_ORDER;
-                String error_mess = e == null ? "" : e.getMessage();
-                String products_mess = products == null ? "" : products.toString();
-                message.obj = new Order(order, products_mess, error_mess);
+                message.obj = order;
                 this.handler.sendMessage(message);
             }
             TimeConsts.ORDER_END_TIME = now;
@@ -65,5 +58,14 @@ public class BdCallback implements IRetailCallBack {
     @Override
     public void callbackOrderWithStrange(String s, Exception e, JSONArray jsonArray, List<String> list) {
         ILog.d(TIME_TAG, "回调新方法");
+    }
+
+    @Override
+    public void recordOrderResultCallback(String errorCode, Exception e) {
+        String mess = "订单结果上传:" + ("0".equals(errorCode) ? "成功" : "失败");
+        if (e != null) {
+            mess += e.getMessage() + ",";
+        }
+        ILog.d(TIME_TAG, mess);
     }
 }

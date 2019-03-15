@@ -32,7 +32,7 @@
                     android:layout_marginLeft="15dp"
                     android:layout_marginTop="10dp"
                     android:text="@string/media_stream_main"
-                    android:textColor="@color/grey"
+                    android:textColor="@color/gray"
                     android:textSize="16sp" />
 
                 <LinearLayout
@@ -183,7 +183,7 @@
                     android:layout_marginLeft="15dp"
                     android:layout_marginTop="10dp"
                     android:text="@string/media_stream_secondary"
-                    android:textColor="@color/grey"
+                    android:textColor="@color/gray"
                     android:textSize="16sp" />
 
                 <LinearLayout

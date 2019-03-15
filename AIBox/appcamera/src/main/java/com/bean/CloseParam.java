@@ -1,7 +1,6 @@
 package com.bean;
 
 import com.baidu.retail.RetailInputParam;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;

@@ -356,7 +356,7 @@ public class ActivityGuideDeviceSystemInfo extends ActivityDemo
     }
     
 	public void syncTime(View v){
-		AlertDialog.Builder builder = new Builder(this);
+		Builder builder = new Builder(this);
 
 		builder.setTitle(R.string.device_system_info_time_sync);
 		builder.setPositiveButton(R.string.common_confirm, new DialogInterface.OnClickListener() {
@@ -394,7 +394,7 @@ public class ActivityGuideDeviceSystemInfo extends ActivityDemo
 
     private void DeviceDefaltConfig(){
 
-        AlertDialog.Builder builder = new Builder(this);
+        Builder builder = new Builder(this);
         builder.setTitle(R.string.device_system_info_defealtconfig);
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener(){
             @Override

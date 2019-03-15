@@ -38,7 +38,7 @@ public interface OnFunDeviceOptListener extends OnFunListener {
 	 * @param funDevice
 	 */
 	void onDeviceSetConfigSuccess(final FunDevice funDevice,
-								  final String configName);
+                                  final String configName);
 	
 	/**
 	 * 设备获取配置/运行状态失败
@@ -46,7 +46,7 @@ public interface OnFunDeviceOptListener extends OnFunListener {
 	 * @param errCode
 	 */
 	void onDeviceSetConfigFailed(final FunDevice funDevice,
-								 final String configName, final Integer errCode);
+                                 final String configName, final Integer errCode);
 	
 	/**
 	 * 修改设备信息成功

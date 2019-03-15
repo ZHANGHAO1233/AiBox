@@ -132,7 +132,7 @@ public class ActivityGuideDevicesSocketAboutWork extends
 
 		new AlertDialog.Builder(this).setTitle(this.getResources().getString(R.string.devices_socket_power_set))// 提示框标题
 				.setView(view).setPositiveButton(this.getResources().getString(R.string.common_confirm),// 提示框的两个按钮
-						new android.content.DialogInterface.OnClickListener() {
+						new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog,
 									int which) {

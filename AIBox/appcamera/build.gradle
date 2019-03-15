@@ -9,7 +9,7 @@ android {
     defaultConfig {
         applicationId "com.idata.aibox"
         minSdkVersion 21//原17
-        targetSdkVersion 25
+        targetSdkVersion 21
     }
 
     buildTypes {

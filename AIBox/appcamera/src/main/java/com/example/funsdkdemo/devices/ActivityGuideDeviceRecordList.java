@@ -604,7 +604,7 @@ public class ActivityGuideDeviceRecordList extends ActivityDemo
 						new AlertDialog.Builder(ActivityGuideDeviceRecordList.this)
 	                    .setTitle("Download ?")
 	                    .setNeutralButton("Cancel", null)
-	                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+	                    .setPositiveButton("OK", new OnClickListener() {
 	                        @Override
 	                        public void onClick(DialogInterface dialog, int which) {
 	                            FunFileData recordFile = mRecordByFileAdapter.getRecordFile(position);
