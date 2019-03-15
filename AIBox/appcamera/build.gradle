@@ -3,13 +3,17 @@ apply plugin: 'com.android.application'
 
 
 android {
-    compileSdkVersion 21
-    buildToolsVersion "26.0.2"
+    compileSdkVersion versionCompiler
+
+    compileOptions {
+        sourceCompatibility javaSourceCompatibility
+        targetCompatibility javaTargetCompatibility
+    }
 
     defaultConfig {
-        applicationId "com.idata.aibox"
-        minSdkVersion 21//原17
-        targetSdkVersion 21
+        minSdkVersion 21
+        targetSdkVersion versionTarget
+
     }
 
     buildTypes {
@@ -28,6 +32,7 @@ android {
             jniLibs.srcDirs = ['libs']
         }
     }
+    useLibrary 'org.apache.http.legacy'
 }
 
 repositories {
