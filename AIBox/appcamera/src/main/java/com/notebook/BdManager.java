@@ -93,7 +93,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         OsModule.get().addDoorListener(this);
         initBdConfig();
         initWeightCommands();
-//        openWeightPorts();
+        openWeightPorts();
         this.orderMap = new HashMap<>();
     }
 
@@ -136,20 +136,22 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         this.serials = new HashMap<>();
         k:
         for (String path : paths) {
-            Device device = new Device(path, BAUDRATE_DEFAULT_VALUE);
-            SerialPortManager manager = new SerialPortManager();
-            boolean opend = manager.open(device) != null;
-            ILog.d(TAG, device.toString() + (opend ? ",打开成功" : ",打开失败"));
-            if (opend) {
-                for (String key : commandMap.keySet()) {
-                    String command = commandMap.get(key).get(0);
-                    Map<String, Double> data = manager.sendCommand(Collections.singletonList(command));
-                    if (data.get(command) != null) {
-                        ILog.d(TAG, "匹配到" + command + "对应串口:" + manager.toString());
-                        serials.put(key, manager);
-                        continue k;
-                    } else {
-                        manager.close();
+            if (path.toUpperCase().contains("TTYSWK0")) {
+                Device device = new Device(path, BAUDRATE_DEFAULT_VALUE);
+                SerialPortManager manager = new SerialPortManager();
+                boolean opend = manager.open(device) != null;
+                ILog.d(TAG, device.toString() + (opend ? ",打开成功" : ",打开失败"));
+                if (opend) {
+                    for (String key : commandMap.keySet()) {
+                        String command = commandMap.get(key).get(0);
+                        Map<String, Double> data = manager.sendCommand(Collections.singletonList(command));
+                        if (data.get(command) != null) {
+                            ILog.d(TAG, "匹配到" + command + "对应串口:" + manager.toString());
+                            serials.put(key, manager);
+                            continue k;
+                        } else {
+                            manager.close();
+                        }
                     }
                 }
             }
@@ -254,7 +256,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
                             } else {
                                 onDownloadFailed(new Exception("下载图片超时"), isOpenDoor);
                             }
-                        }else {
+                        } else {
                             onDownloadFailed(new Exception("下载图片失败"), isOpenDoor);
                         }
                     }

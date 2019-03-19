@@ -2,8 +2,6 @@ package com.notebook;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
@@ -26,6 +24,7 @@ import com.box.core.OsModule;
 import com.box.utils.ILog;
 import com.idata.aibox.R;
 import com.lib.sdk.bean.StringUtils;
+import com.mgr.ConfigPropertiesManager;
 import com.mgr.OrderFileManager;
 import com.mgr.serial.comn.util.GsonUtil;
 import com.serenegiant.usb.DeviceFilter;
@@ -44,6 +43,7 @@ import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_CAMREA_F
 import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_CAMREA_FLOOR_KEY_2;
 import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_CAMREA_FLOOR_KEY_3;
 import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_CAMREA_FLOOR_KEY_4;
+import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_CAMREA_PATHS;
 import static com.consts.HandleConsts.HANDLER_MESSAGE_WHAT_INITED;
 import static com.consts.HandleConsts.HANDLER_MESSAGE_WHAT_MESS;
 import static com.consts.HandleConsts.HANDLER_MESSAGE_WHAT_ORDER;
@@ -123,7 +123,7 @@ public class NotebookActivity extends android.app.Activity implements View.OnCli
             @Override
             public void onConnect(UsbDevice device, USBMonitor.UsbControlBlock ctrlBlock, boolean createNew) {
                 for (UsbDevcieEntity entity : handlers) {
-                    if (entity.getUsbDevice().getDeviceName().equals(device.getDeviceName())) {
+                    if (entity.getUsbDevice().getSerialNumber().equals(device.getSerialNumber())) {
                         UVCCameraHandler cameraHandler = entity.getHandler();
                         UVCCameraTextureView view = entity.getCameraTextureView();
                         cameraHandler.open(ctrlBlock);
@@ -168,7 +168,7 @@ public class NotebookActivity extends android.app.Activity implements View.OnCli
         textureView.onResume();
         new Handler().postDelayed(() -> {
             for (UsbDevice usb : usbDevices) {
-                if (cameraSet.get(floor).equals(usb.getDeviceName())) {
+                if (cameraSet.get(floor).equals(usb.getSerialNumber())) {
                     this.handlers.add(new UsbDevcieEntity(floor, usb, textureView, handler));
                     usbMonitor.requestPermission(usb);//获取设备信息，并检查打开此设备的权限
                 }
@@ -177,8 +177,7 @@ public class NotebookActivity extends android.app.Activity implements View.OnCli
     }
 
     private Map<String, String> getCameraSeting() {
-        String s_paths = "{\"1\":\"/dev/bus/usb/002/004\",\"2\":\"/dev/bus/usb/002/005\"}";
-//        String s_paths = ConfigPropertiesManager.getInstance().getConfigProperty(SETTING_CONFIG_PROPERTY_CAMREA_PATHS);
+        String s_paths = ConfigPropertiesManager.getInstance().getConfigProperty(SETTING_CONFIG_PROPERTY_CAMREA_PATHS);
         Map<String, String> paths;
         if (!StringUtils.isStringNULL(s_paths)) {
             paths = GsonUtil.fromJson(s_paths, Map.class);

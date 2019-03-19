@@ -2,6 +2,7 @@ package com.notebook;
 
 import android.os.Handler;
 import android.os.Message;
+import android.text.TextUtils;
 
 import com.baidu.retail.BaiduGlobalVar;
 import com.baidu.retail.IRetailCallBack;
@@ -13,7 +14,6 @@ import com.consts.TimeConsts;
 import org.json.JSONArray;
 
 import java.util.Date;
-import java.util.List;
 
 import static com.box.utils.ILog.TIME_TAG;
 
@@ -56,9 +56,20 @@ public class BdCallback implements IRetailCallBack {
     }
 
     @Override
-    public void callbackOrderWithStrange(String s, Exception e, JSONArray jsonArray, List<String> list) {
-        ILog.d(TIME_TAG, "回调新方法");
+    public void containerCallback(String orderno, JSONArray jsonArray, int i, Exception e) {
+        String mess = "containerCallback:";
+        if (!TextUtils.isEmpty(orderno)) {
+            mess += (orderno + ",");
+        }
+        if (e != null) {
+            mess += (e.getMessage() + ",");
+        }
+        if (mess != null) {
+            mess += mess;
+        }
+        ILog.d(TIME_TAG, mess);
     }
+
 
     @Override
     public void recordOrderResultCallback(String errorCode, Exception e) {

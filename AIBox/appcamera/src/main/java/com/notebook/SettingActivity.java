@@ -91,7 +91,7 @@ public class SettingActivity extends Activity implements View.OnClickListener {
             Integer selected = null;
             for (int j = 0; j < usbDevices.size(); j++) {
                 UsbDevice ud = usbDevices.get(j);
-                if (ud.getDeviceName().equals(path)) {
+                if (ud.getSerialNumber().equals(path)) {
                     selected = j;
                     break;
                 }
@@ -105,7 +105,7 @@ public class SettingActivity extends Activity implements View.OnClickListener {
             if (cameraSeting == null) {
                 cameraSeting = new HashMap<>();
             }
-            cameraSeting.put(floor + "", usbDevice.getDeviceName());
+            cameraSeting.put(floor + "", usbDevice.getSerialNumber());
             ConfigPropertiesManager.getInstance().setConfigProperty(SETTING_CONFIG_PROPERTY_CAMREA_PATHS,
                     GsonUtil.toJson(cameraSeting));
         });
