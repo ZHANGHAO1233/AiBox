@@ -1,1 +1,1 @@
-include ':homeapp', ':appcamera'
+include ':homeapp', ':appcamera', ':usbCameraCommon', ':libuvccamera'

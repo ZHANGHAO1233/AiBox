@@ -14,20 +14,28 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.MainActivity;
+import com.adapter.CameraSettingAdapter;
 import com.bean.Tuple2;
 import com.box.utils.LogUtil;
 import com.idata.aibox.R;
 import com.lib.sdk.bean.StringUtils;
 import com.mgr.ConfigPropertiesManager;
 import com.mgr.ImageCacheManager;
+import com.mgr.serial.comn.util.GsonUtil;
+import com.serenegiant.usb.DeviceFilter;
+import com.serenegiant.usb.USBMonitor;
 import com.utils.FileUtil;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_CAMREA_PATHS;
 import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_HOST;
 import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_HOST_DEFAULT_VALUE;
+import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_MAX_CAMREA_SIZE_DEFAULT;
 import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_PORT;
 import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_PORT_DEFAULT_VALUE;
 
@@ -67,7 +75,49 @@ public class SettingActivity extends Activity implements View.OnClickListener {
     }
 
     private void initCamera() {
-        List<Tuple2<Integer, UsbDevice>> usbs = new ArrayList<>();
+        USBMonitor usbMonitor = NotebookActivity.usbMonitor;
+        if (usbMonitor == null) {
+            return;
+        }
+        List<DeviceFilter> filter = DeviceFilter.getDeviceFilters(this, R.xml.device_filter);
+        List<UsbDevice> usbDevices = usbMonitor.getDeviceList(filter.get(0));
+        Map<String, String> paths = getCameraSeting();
+        List<Tuple2<Integer, Tuple2<List<UsbDevice>, Integer>>> usbs = new ArrayList<>();
+        for (int i = 1; i <= SETTING_CONFIG_PROPERTY_MAX_CAMREA_SIZE_DEFAULT; i++) {
+            String path = "";
+            if (paths != null) {
+                path = paths.get(i + "");
+            }
+            Integer selected = null;
+            for (int j = 0; j < usbDevices.size(); j++) {
+                UsbDevice ud = usbDevices.get(j);
+                if (ud.getDeviceName().equals(path)) {
+                    selected = j;
+                    break;
+                }
+            }
+            usbs.add(new Tuple2<>(i, new Tuple2<>(usbDevices, selected)));
+        }
+        CameraSettingAdapter adapter = new CameraSettingAdapter(usbs, this);
+        this.lv_cameras_setting.setAdapter(adapter);
+        adapter.setListener((floor, usbDevice) -> {
+            Map<String, String> cameraSeting = this.getCameraSeting();
+            if (cameraSeting == null) {
+                cameraSeting = new HashMap<>();
+            }
+            cameraSeting.put(floor + "", usbDevice.getDeviceName());
+            ConfigPropertiesManager.getInstance().setConfigProperty(SETTING_CONFIG_PROPERTY_CAMREA_PATHS,
+                    GsonUtil.toJson(cameraSeting));
+        });
+    }
+
+    private Map<String, String> getCameraSeting() {
+        String s_paths = ConfigPropertiesManager.getInstance().getConfigProperty(SETTING_CONFIG_PROPERTY_CAMREA_PATHS);
+        Map<String, String> paths = null;
+        if (!StringUtils.isStringNULL(s_paths)) {
+            paths = GsonUtil.fromJson(s_paths, Map.class);
+        }
+        return paths;
     }
 
     @Override

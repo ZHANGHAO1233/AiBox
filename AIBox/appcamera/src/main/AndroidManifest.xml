@@ -38,6 +38,14 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- usb摄像头 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.camera.autofocus" />
 
     <application
         android:name="com.example.funsdkdemo.MyApplication"
@@ -392,14 +400,16 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name="com.notebook.NotebookActivity">
+        <activity
+            android:name="com.notebook.NotebookActivity"
+            android:hardwareAccelerated="true">
 
             <!-- <intent-filter> -->
             <!-- <action android:name="android.intent.action.MAIN" /> -->
             <!-- <category android:name="android.intent.category.LAUNCHER" /> -->
             <!-- </intent-filter> -->
         </activity>
-        <activity android:name="com.notebook.SettingActivity"/>
+        <activity android:name="com.notebook.SettingActivity" />
     </application>
 
 </manifest>

@@ -1,1 +1,2 @@
 HOST=http://192.168.1.186:8080
+CAMREA_PATHS={"1":"/dev/bus/usb/002/004"}
