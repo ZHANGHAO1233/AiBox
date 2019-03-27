@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.bean.Tuple2;
 import com.idata.aibox.R;
+import com.widget.DropDownListView;
 
 import java.util.List;
 
@@ -56,22 +57,14 @@ public class CameraSettingAdapter extends BaseAdapter {
         int resource = R.layout.layout_item_camera_floor;
         View view = LayoutInflater.from(context).inflate(resource, viewGroup, false);
         TextView tv_floor = view.findViewById(R.id.tv_floor);
-        Spinner spinner_camera = view.findViewById(R.id.spinner_camera);
+        DropDownListView spinner_camera = view.findViewById(R.id.spinner_camera);
         Tuple2<List<UsbDevice>, Integer> usbDevices = getItem(position).getValue2();
         spinner_camera.setAdapter(new DeviceListAdapter(context, usbDevices.getValue1()));
         tv_floor.setText("第" + (position + 1) + "层");
         if (usbDevices.getValue1() != null && usbDevices.getValue1().size() > 0) {
-            spinner_camera.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                    if (listener != null) {
-                        listener.onCameraSetting(position + 1, usbDevices.getValue1().get(i));
-                    }
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> adapterView) {
-
+            spinner_camera.setItemSelectedListener((adapter, parent, view1, position1, id) -> {
+                if (listener != null) {
+                    listener.onCameraSetting(position + 1, usbDevices.getValue1().get(position1));
                 }
             });
             spinner_camera.setSelection(usbDevices.getValue2() == null ? -1 : usbDevices.getValue2());

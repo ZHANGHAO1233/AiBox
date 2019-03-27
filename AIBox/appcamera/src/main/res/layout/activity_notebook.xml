@@ -72,7 +72,7 @@
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_weight="0.5"
             android:orientation="vertical">
 
             <com.serenegiant.widget.UVCCameraTextureView
@@ -92,13 +92,6 @@
                 android:layout_centerVertical="true"
                 android:layout_margin="5dp"
                 android:layout_weight="1" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical">
 
             <com.serenegiant.widget.UVCCameraTextureView
                 android:id="@+id/camera_floor_3_view"

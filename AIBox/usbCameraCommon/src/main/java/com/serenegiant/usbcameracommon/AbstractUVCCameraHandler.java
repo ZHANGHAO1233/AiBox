@@ -490,7 +490,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 				mUVCCamera.setPreviewTexture((SurfaceTexture)surface);
 			}
 
-			mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
+			mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_RGB565);
 
 			mUVCCamera.startPreview();
 			mUVCCamera.updateCameraParams();

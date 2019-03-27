@@ -15,6 +15,7 @@ import com.baidu.retail.RetailVisManager;
 import com.bean.CloseParam;
 import com.bean.OpenParam;
 import com.bean.Order;
+import com.bean.Tuple2;
 import com.box.core.OsModule;
 import com.box.utils.ILog;
 import com.box.utils.TimeUtil;
@@ -32,12 +33,14 @@ import org.json.JSONArray;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.box.utils.ILog.TIME_TAG;
 import static com.consts.HandleConsts.HANDLER_MESSAGE_WHAT_PARMA;
@@ -68,7 +71,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
     private final String linkChar = "-";
     private Map<String, SerialPortManager> serials;
     private Map<String, List<String>> commandMap;
-    private Map<String, byte[]> cameraHandlerMap;
+    private Map<String, Tuple2<Long, byte[]>> cameraHandlerMap;
     private static final String BAUDRATE_DEFAULT_VALUE = "115200";
     private String currentImageDir;
     private Map<String, Order> orderMap;
@@ -159,12 +162,23 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         ILog.d(TAG, "初始化" + serials.size() + "个串口");
     }
 
-
     public void putLastCameraImage(String floor, byte[] data) {
-        if (this.cameraHandlerMap == null) {
-            this.cameraHandlerMap = new HashMap<>();
+        if (hasDownLoadFinish) {
+            if (this.cameraHandlerMap == null) {
+                this.cameraHandlerMap = new ConcurrentHashMap<>();
+            }
+            Tuple2<Long, byte[]> floor_data = this.cameraHandlerMap.get(floor);
+            long now = new Date().getTime();
+            if (floor_data != null) {
+                if (now - floor_data.getValue1() > 200) {
+                    floor_data.setValue1(now);
+                    floor_data.setValue2(data);
+                    ILog.d(TAG, "更新" + floor + "图片缓存");
+                }
+            } else {
+                this.cameraHandlerMap.put(floor, new Tuple2<>(now, data));
+            }
         }
-        this.cameraHandlerMap.put(floor, data);
     }
 
 
@@ -224,7 +238,7 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
             TimeConsts.CLOSE_DOWNLOAD_IMAGES_START_TIME = now;
         }
         if (hasDownLoadFinish) {
-            ILog.d(TIME_TAG, now + ",开始下载图片");
+            hasDownLoadFinish = false;
             paths.clear();
             finishNum = 0;
             String currentTime = TimeUtil.getTimeStr();
@@ -233,21 +247,27 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
                 currentImageDir = ImageCacheManager.getInstance().getBase_image_path() + File.separator + currentDirTime;
                 createPath(currentImageDir);
             }
-            new AsyncTask<Void, Void, Void>() {
-                @Override
-                protected Void doInBackground(Void... voids) {
-                    for (String floor : cameraHandlerMap.keySet()) {
+            ILog.d(TIME_TAG, now + ",开始下载图片");
+            for (String floor : cameraHandlerMap.keySet()) {
+                byte[] bytes = cameraHandlerMap.get(floor).getValue2();
+                new AsyncTask<Void, Void, Void>() {
+                    @Override
+                    protected Void doInBackground(Void... voids) {
                         String imageName = currentImageDir + File.separator + floor + linkChar +
                                 (isOpenDoor ? "open" + linkChar + currentTime + ".jpg"
                                         : "close" + linkChar + currentTime + ".jpg");
-                        byte[] bytes = cameraHandlerMap.get(floor);
                         if (bytes != null) {
                             try {
-                                Bitmap bitmap = nv12ToBitmap(bytes, UVCCamera.DEFAULT_PREVIEW_WIDTH, UVCCamera.DEFAULT_PREVIEW_HEIGHT);
+                                long start_time = new Date().getTime();
+                                Bitmap bitmap = RGB_565ToBitmap(bytes, UVCCamera.DEFAULT_PREVIEW_WIDTH, UVCCamera.DEFAULT_PREVIEW_HEIGHT);
+                                long decode_time = new Date().getTime();
+                                ILog.d(TIME_TAG, imageName + "解析图像时长" + (decode_time - start_time));
                                 FileOutputStream fos = new FileOutputStream(imageName, false);
-                                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+                                bitmap.compress(Bitmap.CompressFormat.JPEG, 80, fos);
                                 fos.flush();
                                 fos.close();
+                                bitmap.recycle();
+                                ILog.d(TIME_TAG, imageName + "保存图像时长" + (new Date().getTime() - decode_time));
                             } catch (Exception e) {
                                 onDownloadFailed(new Exception("保存图片失败" + e.getMessage()), isOpenDoor);
                             }
@@ -259,11 +279,17 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
                         } else {
                             onDownloadFailed(new Exception("下载图片失败"), isOpenDoor);
                         }
+                        return null;
                     }
-                    return null;
-                }
-            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            }
         }
+    }
+
+    private Bitmap RGB_565ToBitmap(byte[] data, int width, int height) {
+        Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+        bmp.copyPixelsFromBuffer(ByteBuffer.wrap(data));
+        return bmp;
     }
 
     private Bitmap nv12ToBitmap(byte[] data, int width, int height) {
@@ -324,10 +350,10 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
         new Thread(() -> {
             Looper.prepare();
             if (setTransactionStatusInited(0)) {
+                serialResults = null;
                 OsModule.get().sendLockStatus2Server(true);
                 TimeConsts.OPEN_COLLECTION_START_TIME = new Date().getTime();
                 downloadImages(true);
-                serialResults = null;
                 serialResults = getWeightResults(true);
             }
         }).start();
@@ -335,21 +361,28 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
 
     public void testClose() {
         new Thread(() -> {
+            serialResults = null;
             Looper.prepare();
             OsModule.get().sendLockStatus2Server(false);
             TimeConsts.CLOSE_COLLECTION_START_TIME = new Date().getTime();
             downloadImages(false);
-            serialResults = null;
             serialResults = getWeightResults(false);
         }).start();
     }
 
+    @SuppressLint("StaticFieldLeak")
     private void startRecognize(final boolean isOpenDoor) {
-        new Thread(() -> {
-            synchronized (serials) {
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected Void doInBackground(Void... voids) {
                 while (serialResults == null) {
+                    try {
+                        Thread.sleep(50);
+                        ILog.d(TAG, "等待获取重力完成");
+                    } catch (InterruptedException e) {
+                        ILog.d(TAG, "线程休眠失败");
+                    }
                 }
-                Looper.prepare();
                 long now = new Date().getTime();
                 ILog.d(TIME_TAG, now + ",开始整理" + (isOpenDoor ? "开门" : "关门") + "参数");
 //                    testImage(isOpenDoor);
@@ -386,8 +419,9 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
                     ILog.d("无有效参数，订单结束");
                     setTransactionStatusError("无有效参数，订单结束");
                 }
+                return null;
             }
-        }).start();
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     /**
@@ -598,7 +632,9 @@ public class BdManager implements OsModule.OnDoorStatusListener, DownloadUtil.On
             List<String> commands = this.commandMap.get(key);
             SerialPortManager manager = this.serials.get(key);
             if (manager != null) {
+                ILog.d(TIME_TAG, new Date().getTime() + "开始获取" + key + "数据");
                 resultMap.putAll(manager.sendCommand(commands));
+                ILog.d(TIME_TAG, new Date().getTime() + "获取" + key + "数据结束");
             }
         }
         now = new Date().getTime();

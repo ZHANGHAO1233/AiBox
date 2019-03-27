@@ -6,9 +6,8 @@ import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.view.KeyEvent;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,18 +32,10 @@ import java.util.List;
 import java.util.Map;
 
 import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_CAMREA_PATHS;
-import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_HOST;
-import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_HOST_DEFAULT_VALUE;
 import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_MAX_CAMREA_SIZE_DEFAULT;
-import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_PORT;
-import static com.consts.ConfigPropertiesConsts.SETTING_CONFIG_PROPERTY_PORT_DEFAULT_VALUE;
 
 public class SettingActivity extends Activity implements View.OnClickListener {
     private static final String TAG = "SettingActivity";
-    private EditText et_host;
-    private EditText et_host_port;
-    private Button btn_host_reset;
-    private Button btn_host_confirm;
     private TextView tv_clean_cache;
     private ListView lv_cameras_setting;
 
@@ -52,33 +43,18 @@ public class SettingActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setting);
-        this.et_host = (EditText) findViewById(R.id.et_host);
-        this.et_host_port = (EditText) findViewById(R.id.et_host_port);
-        this.btn_host_reset = (Button) findViewById(R.id.btn_host_reset);
-        this.btn_host_confirm = (Button) findViewById(R.id.btn_host_confirm);
-        this.tv_clean_cache = (TextView) findViewById(R.id.tv_clean_cache);
-        this.lv_cameras_setting = (ListView) findViewById(R.id.lv_cameras_setting);
-        this.btn_host_reset.setOnClickListener(this);
-        this.btn_host_confirm.setOnClickListener(this);
+        this.tv_clean_cache = findViewById(R.id.tv_clean_cache);
+        this.lv_cameras_setting = findViewById(R.id.lv_cameras_setting);
         this.tv_clean_cache.setOnClickListener(this);
         this.initData();
     }
 
     private void initData() {
-        String host = ConfigPropertiesManager.getInstance().getConfigProperty(SETTING_CONFIG_PROPERTY_HOST,
-                SETTING_CONFIG_PROPERTY_HOST_DEFAULT_VALUE);
-        String port = ConfigPropertiesManager.getInstance().getConfigProperty(SETTING_CONFIG_PROPERTY_PORT,
-                SETTING_CONFIG_PROPERTY_PORT_DEFAULT_VALUE);
-        this.et_host.setText(host);
-        this.et_host_port.setText(port);
         this.initCamera();
     }
 
     private void initCamera() {
-        USBMonitor usbMonitor = NotebookActivity.usbMonitor;
-        if (usbMonitor == null) {
-            return;
-        }
+        USBMonitor usbMonitor = usbMonitor = new USBMonitor(this, null);
         List<DeviceFilter> filter = DeviceFilter.getDeviceFilters(this, R.xml.device_filter);
         List<UsbDevice> usbDevices = usbMonitor.getDeviceList(filter.get(0));
         Map<String, String> paths = getCameraSeting();
@@ -123,14 +99,6 @@ public class SettingActivity extends Activity implements View.OnClickListener {
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.btn_host_confirm:
-                this.confirmHost();
-                break;
-            case R.id.btn_host_reset:
-                this.et_host.setText(SETTING_CONFIG_PROPERTY_HOST_DEFAULT_VALUE);
-                this.et_host_port.setText(SETTING_CONFIG_PROPERTY_PORT_DEFAULT_VALUE);
-                this.confirmHost();
-                break;
             case R.id.tv_clean_cache:
                 this.cleanCache();
                 break;
@@ -149,12 +117,7 @@ public class SettingActivity extends Activity implements View.OnClickListener {
             FileUtil.deleteFile(new File(path));
         }
         Toast.makeText(this, "清除缓存成功,正在重启", Toast.LENGTH_LONG).show();
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                reStartApp();
-            }
-        }, 1000);
+        new Handler().postDelayed(() -> reStartApp(), 1000);
     }
 
     public void reStartApp() {
@@ -164,13 +127,13 @@ public class SettingActivity extends Activity implements View.OnClickListener {
         android.os.Process.killProcess(android.os.Process.myPid());
     }
 
-    private void confirmHost() {
-        String host = this.et_host.getText().toString();
-        String port = this.et_host_port.getText().toString();
-        if (!StringUtils.isStringNULL(host) && !StringUtils.isStringNULL(port)) {
-            ConfigPropertiesManager.getInstance().setConfigProperty(SETTING_CONFIG_PROPERTY_HOST, host);
-            ConfigPropertiesManager.getInstance().setConfigProperty(SETTING_CONFIG_PROPERTY_PORT, port);
-            Toast.makeText(this, "设置成功", Toast.LENGTH_LONG).show();
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            Toast.makeText(this, "正在更新", Toast.LENGTH_LONG).show();
+            new Handler().postDelayed(() -> reStartApp(), 1000);
+            return true;
         }
+        return super.onKeyDown(keyCode, event);
     }
 }

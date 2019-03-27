@@ -8,60 +8,6 @@
     tools:context="com.notebook.SettingActivity">
 
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="10dp"
-        android:text="基本配置"
-        android:textSize="20dp"
-        android:textStyle="bold" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="10dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="主机:" />
-
-        <EditText
-            android:id="@+id/et_host"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:singleLine="true" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dp"
-            android:text="端口:" />
-
-        <EditText
-            android:id="@+id/et_host_port"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:singleLine="true" />
-
-        <Button
-            android:id="@+id/btn_host_reset"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dp"
-            android:text=" 重置 " />
-
-        <Button
-            android:id="@+id/btn_host_confirm"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dp"
-            android:text=" 确定 " />
-    </LinearLayout>
-
-    <TextView
         android:id="@+id/tv_clean_cache"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

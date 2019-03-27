@@ -2,7 +2,6 @@ package com.notebook;
 
 import android.os.Handler;
 import android.os.Message;
-import android.text.TextUtils;
 
 import com.baidu.retail.BaiduGlobalVar;
 import com.baidu.retail.IRetailCallBack;
@@ -29,14 +28,20 @@ public class BdCallback implements IRetailCallBack {
 
     @Override
     public void callbackOrder(String orderno, Exception e, JSONArray products) {
+
+    }
+
+    @Override
+    public void containerCallback(String orderno, JSONArray products, int status, Exception e) {
         long now = new Date().getTime();
         String mess = now + "，订单返回结果:" + orderno + ",";
         if (e != null) {
             mess += e.getMessage() + ",";
         }
         if (products != null) {
-            mess += products;
+            mess += "products" + products;
         }
+        mess += "status" + status;
         ILog.d(TIME_TAG, mess);
         Order order = BdManager.getBd().setOrderResult(orderno, products, e);
         if (order != null) {
@@ -53,21 +58,6 @@ public class BdCallback implements IRetailCallBack {
             String detail = TimeConsts.write();
             ILog.d(TIME_TAG, detail);
         }
-    }
-
-    @Override
-    public void containerCallback(String orderno, JSONArray jsonArray, int i, Exception e) {
-        String mess = "containerCallback:";
-        if (!TextUtils.isEmpty(orderno)) {
-            mess += (orderno + ",");
-        }
-        if (e != null) {
-            mess += (e.getMessage() + ",");
-        }
-        if (mess != null) {
-            mess += mess;
-        }
-        ILog.d(TIME_TAG, mess);
     }
 
 

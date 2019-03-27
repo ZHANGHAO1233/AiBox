@@ -1,6 +1,8 @@
 package com.bean;
 
+import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
+import android.view.Surface;
 
 import com.serenegiant.usbcameracommon.UVCCameraHandler;
 import com.serenegiant.widget.UVCCameraTextureView;
@@ -10,6 +12,7 @@ public class UsbDevcieEntity {
     UsbDevice usbDevice;
     UVCCameraTextureView cameraTextureView;
     UVCCameraHandler handler;
+    Surface surface;
 
     public UsbDevcieEntity(String floor, UsbDevice usbDevice, UVCCameraTextureView cameraTextureView, UVCCameraHandler handler) {
         this.floor = floor;
@@ -48,5 +51,14 @@ public class UsbDevcieEntity {
 
     public void setHandler(UVCCameraHandler handler) {
         this.handler = handler;
+    }
+
+
+    public Surface getSurface() {
+        return surface;
+    }
+
+    public void setSurface(Surface surface) {
+        this.surface = surface;
     }
 }

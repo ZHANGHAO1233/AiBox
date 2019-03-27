@@ -99,20 +99,10 @@ public class NotebookActivity extends android.app.Activity implements View.OnCli
         findViewById(R.id.download2).setOnClickListener(this);
         findViewById(R.id.order_succ).setOnClickListener(this);
         findViewById(R.id.order_fail).setOnClickListener(this);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        this.initCameraViews();
-    }
-
-    private void initCameraViews() {
-        this.handlers = new ArrayList<>();
-        usbMonitor = new USBMonitor(this, new USBMonitor.OnDeviceConnectListener() {
+        this.usbMonitor = new USBMonitor(this, new USBMonitor.OnDeviceConnectListener() {
             @Override
             public void onAttach(UsbDevice device) {
-                Toast.makeText(NotebookActivity.this, "USB_DEVICE_ATTACHED", Toast.LENGTH_SHORT).show();
+                Toast.makeText(NotebookActivity.this, device.getSerialNumber() + " Attach", Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -124,18 +114,31 @@ public class NotebookActivity extends android.app.Activity implements View.OnCli
             public void onConnect(UsbDevice device, USBMonitor.UsbControlBlock ctrlBlock, boolean createNew) {
                 for (UsbDevcieEntity entity : handlers) {
                     if (entity.getUsbDevice().getSerialNumber().equals(device.getSerialNumber())) {
-                        UVCCameraHandler cameraHandler = entity.getHandler();
-                        UVCCameraTextureView view = entity.getCameraTextureView();
-                        cameraHandler.open(ctrlBlock);
-                        SurfaceTexture st = view.getSurfaceTexture();
-                        cameraHandler.startPreview(new Surface(st));
+                        if (entity.getSurface() == null) {
+                            Toast.makeText(NotebookActivity.this, device.getSerialNumber() + " Connected", Toast.LENGTH_SHORT).show();
+                            UVCCameraHandler cameraHandler = entity.getHandler();
+                            UVCCameraTextureView view = entity.getCameraTextureView();
+                            cameraHandler.open(ctrlBlock);
+                            SurfaceTexture st = view.getSurfaceTexture();
+                            Surface surface = new Surface(st);
+                            entity.setSurface(surface);
+                            cameraHandler.startPreview(surface);
+                        }
                     }
                 }
             }
 
             @Override
             public void onDisconnect(UsbDevice device, USBMonitor.UsbControlBlock ctrlBlock) {
-
+                for (UsbDevcieEntity entity : handlers) {
+                    if (entity.getUsbDevice().getSerialNumber().equals(device.getSerialNumber())) {
+                        UVCCameraHandler handler = entity.getHandler();
+                        handler.close();
+                        Surface surface = entity.getSurface();
+                        if (surface != null)
+                            surface.release();
+                    }
+                }
             }
 
             @Override
@@ -143,7 +146,13 @@ public class NotebookActivity extends android.app.Activity implements View.OnCli
 
             }
         });
-        usbMonitor.register();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        this.handlers = new ArrayList<>();
+        this.usbMonitor.register();
         List<DeviceFilter> filter = DeviceFilter.getDeviceFilters(this, R.xml.device_filter);
         List<UsbDevice> usbDevices = usbMonitor.getDeviceList(filter.get(0));
         Map<String, String> cameraSet = this.getCameraSeting();
@@ -156,7 +165,6 @@ public class NotebookActivity extends android.app.Activity implements View.OnCli
         if (cameraSet.get(SETTING_CONFIG_PROPERTY_CAMREA_FLOOR_KEY_4) != null)
             getFloorHandler(SETTING_CONFIG_PROPERTY_CAMREA_FLOOR_KEY_4, floor_4, usbDevices, cameraSet);
     }
-
 
     private void getFloorHandler(String floor, UVCCameraTextureView textureView, List<UsbDevice> usbDevices,
                                  Map<String, String> cameraSet) {
@@ -173,7 +181,7 @@ public class NotebookActivity extends android.app.Activity implements View.OnCli
                     usbMonitor.requestPermission(usb);//获取设备信息，并检查打开此设备的权限
                 }
             }
-        }, 1000);
+        }, 500);
     }
 
     private Map<String, String> getCameraSeting() {
@@ -189,16 +197,22 @@ public class NotebookActivity extends android.app.Activity implements View.OnCli
 
     @Override
     protected void onStop() {
-        for (UsbDevcieEntity usbDevcieEntity : this.handlers) {
-            UVCCameraHandler handler = usbDevcieEntity.getHandler();
-            handler.close();
+        super.onStop();
+        for (UsbDevcieEntity entity : handlers) {
+            Surface surface = entity.getSurface();
+            UVCCameraHandler handler = entity.getHandler();
+            //调用会报错
+            // if (handler != null)
+            //handler.close();
+            if (surface != null)
+                surface.release();
         }
         this.floor_1.onPause();
         this.floor_2.onPause();
         this.floor_3.onPause();
         this.floor_4.onPause();
         usbMonitor.unregister();//usb管理器解绑
-        super.onStop();
+        this.handlers = null;
     }
 
     @Override
@@ -319,6 +333,4 @@ public class NotebookActivity extends android.app.Activity implements View.OnCli
         this.lv_open_params.setAdapter(new RetailInputParamAdapter(param.getRetailInputParams(), this));
         this.updateLog(" ");
     }
-
-
 }
